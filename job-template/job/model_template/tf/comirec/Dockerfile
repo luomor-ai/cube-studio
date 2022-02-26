@@ -1,6 +1,6 @@
 FROM ai.tencentmusic.com/tme-public/tf_distributed_train:latest
 
-RUN pip3 install nni tensorflow==2.3.0 tensorboard-plugin-profile==2.3.0 tensorflow-addons pandas sklearn scipy==1.4.1 prettytable -i https://mirrors.tencent.com/pypi/simple
+RUN pip3 install nni tensorflow==2.3.0 tensorboard-plugin-profile==2.3.0 tensorflow-addons pandas sklearn scipy==1.4.1 prettytable
 
 COPY job/pkgs /app/job/pkgs
 COPY job/tf_model_evaluation/*.py /app/job/tf_model_evaluation/

@@ -681,17 +681,6 @@ CRD_INFO={
         "plural": "jobs",
         "timeout": 60 * 60 * 24 * 2
     }
-
-}
-
-
-# 固定的pvc，在主机的地址和业务容器挂载目录。
-# 主机目录和控制容器以目录必须要一致，这样控制容器操作的就是本地目录
-GLOBAL_PVC_MOUNT={
-    "kubeflow-archives":["/data/k8s/kubeflow/pipeline/archives/",'/archives/'],  # 模型归档的地方
-    "kubeflow-model-deploy":["/data/cfs/qqmusic_cluster/ceph_fuse/meiyangchen/modelbin/",'/modelbin/'],    # 模型部署的地方
-    "kubeflow-user-workspace":["/data/k8s/kubeflow/pipeline/workspace/",'/mnt/'],   # 训练数据的地方
-    "kubeflow-global-pvc":["/data/k8s/kubeflow/global/",'/pvc/'],     # task 配置上传的数据
 }
 
 HOST = os.getenv('HOST','localhost')  # 控制平台的入口，ip或者域名

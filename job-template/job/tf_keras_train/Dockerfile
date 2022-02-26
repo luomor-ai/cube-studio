@@ -5,16 +5,7 @@ ENV PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} \
 
 RUN pip3 freeze | xargs pip3 uninstall -y && \
     python3 -m pip install --upgrade pip && \
-    pip3 install requests && \
-    pip3 install nni && \
-    pip3 install tensorflow==2.3.0 && \
-    pip3 install tensorflow_datasets -i https://mirrors.tencent.com/pypi/simple && \
-    pip3 install tensorflow-addons -i https://mirrors.tencent.com/pypi/simple && \
-    pip3 install tensorboard-plugin-profile==2.3.0 -i https://mirrors.tencent.com/pypi/simple && \
-    pip3 install sklearn -i https://mirrors.tencent.com/pypi/simple && \
-    pip3 install sklearn_pandas -i https://mirrors.tencent.com/pypi/simple && \
-    pip3 install scipy -i https://mirrors.tencent.com/pypi/simple && \
-    pip3 install gensim
+    pip3 install requests nni tensorflow==2.3.0 tensorflow_datasets tensorflow-addons tensorboard-plugin-profile==2.3.0 sklearn sklearn_pandas scipy gensim
 
 COPY job/pkgs /app/job/pkgs
 COPY job/model_template /app/job/model_template
