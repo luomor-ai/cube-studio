@@ -5,6 +5,7 @@ import { mergeStyles, initializeIcons } from '@fluentui/react';
 import AppRouter from './routes';
 import { store } from './models/store';
 import { Provider } from 'react-redux';
+import './app.less';
 
 // fluentui icon 资源初始化
 initializeIcons();
