@@ -3,7 +3,7 @@ TME Cube Studio是由TME研发的集成数据处理、分布式计算、机器�
 
 # 部署平台与组件
 如何在数据中心部署平台请参考平台部署流程, 平台完成部署之后如下:
-![image](docs/example/pic/pipeline.png)
+![image](./docs/example/pic/pipeline.png)
 
 # 开源共建
 有意向进行开源共建的同学请微信添加767065521并备注"Cube Studio开源共建"进入微信群.
