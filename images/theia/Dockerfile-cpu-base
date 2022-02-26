@@ -18,12 +18,3 @@ RUN pip3 install --upgrade pip  && pip install gsutil pysnooper kubernetes simpl
     rm -rf /tmp/* /var/tmp/* ~/.cache
 
 
-# 安装内网的工具。 pip源  ubuntu源  l5，北极星之类的
-RUN mkdir -p /usr/local/services/ && mkdir -p /data/L5Backup/ && chmod -R 777 /data/L5Backup/ && cd /usr/local/services/ && wget https://docker-76009.sz.gfp.tencent-cloud.com/tlinux/l5_protocol_32os-1.0.tar.gz && tar -zxvf l5_protocol_32os-1.0.tar.gz && rm l5_protocol_32os-1.0.tar.gz
-COPY pip.conf /root/.pip/pip.conf
-COPY deb-sources.list /etc/apt/sources.list
-COPY init.sh /init.sh
-COPY ca-certificates.crt /ca-certificates.crt
-RUN cat /ca-certificates.crt >> /etc/ssl/certs/ca-certificates.crt
-RUN apt update && pip install polaris-python
-
