@@ -27,7 +27,7 @@ TME Cube Studio是由TME研发的集成数据处理、分布式计算、机器�
 
 平台完成部署之后如下:
 
-![image](https://github.com/tencentmusic/cube-studio/blob/master/docs/example/pic/pipeline.png)
+![image](https://pengluan-76009.sz.gfp.tencent-cloud.com/github/docs/example/pic/pipeline.png)
 
 
 # 本地调试
