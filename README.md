@@ -26,7 +26,9 @@ TME Cube Studio是由TME研发的集成数据处理、分布式计算、机器�
 本平台依赖k8s/kubeflow/prometheus/efk相关组件，请优先参考install/kubenetes/readme.md 部署依赖组件。
 
 平台完成部署之后如下:
-![image](./docs/example/pic/pipeline.png)
+
+![image](https://github.com/tencentmusic/cube-studio/blob/master/docs/example/pic/pipeline.png)
+
 
 # 本地调试
 
