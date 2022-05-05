@@ -31,7 +31,7 @@ cube会自动为用户挂载用户个人目录，同一个用户在平台任何�
 
 ### 在线开发
 
-支持在线jupyterlab/theia(vscode)等功能，多用户，多实例，cpu/gpu版本。同时支持在线构建docker镜像，免除算法同学docker学习成本
+支持在线jupyterlab/theia(vscode)等功能，多用户，多实例，支持cpu/gpu版本。另外支持在线构建docker镜像，免除算法同学docker学习成本
 
 ![image](./docs/example/pic/debug.png)
 
@@ -89,5 +89,7 @@ tmeps支持tf框架实时训练，秒级上线，能应对embedding稀疏大模�
 平台完成部署之后如下:
 
 ![image](./docs/example/pic/pipeline.png)
+
+
 
 
