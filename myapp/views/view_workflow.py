@@ -36,7 +36,6 @@ from .base import (
     api,
     BaseMyappView,
     check_ownership,
-    CsvResponse,
     data_payload_response,
     DeleteMixin,
     generate_download_headers,
@@ -138,7 +137,7 @@ class Crd_ModelView_Base():
                     if 'pipeline-id' in labels:
                         pipeline = db.session.query(Pipeline).filter_by(id=int(labels['pipeline-id'])).first()
                         if pipeline:
-                            kubeconfig=pipeline.project.cluster['KUBECONFIG']
+                            kubeconfig=pipeline.project.cluster.get('KUBECONFIG','')
 
                     k8s_client = py_k8s.K8s(kubeconfig)
                     crd_info = conf.get("CRD_INFO", {}).get(self.crd_name, {})
@@ -222,7 +221,7 @@ class Workflow_ModelView(Crd_ModelView_Base,MyappModelView,DeleteMixin):
     # 删除之前的 workflow和相关容器
     def delete_workflow(self, workflow):
         try:
-            k8s_client = py_k8s.K8s(workflow.pipeline.project.cluster['KUBECONFIG'])
+            k8s_client = py_k8s.K8s(workflow.pipeline.project.cluster.get('KUBECONFIG',''))
             k8s_client.delete_workflow(
                 all_crd_info=conf.get("CRD_INFO", {}),
                 namespace=workflow.namespace,

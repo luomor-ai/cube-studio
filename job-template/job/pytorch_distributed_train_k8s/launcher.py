@@ -64,11 +64,6 @@ print(GPU_TYPE,GPU_RESOURCE)
 
 
 def default_job_name():
-    # import re
-    # ctx = KFJobContext.get_context()
-    # p_name = str(ctx.pipeline_name) or ''
-    # p_name = re.sub(r'[^-a-z0-9]', '-', p_name)
-    # return "-".join([str(ctx.creator), p_name, "pytorchjob", str(uuid.uuid1())])
     name = "pytorchjob-" + KFJ_PIPELINE_NAME.replace('_','-')+"-"+uuid.uuid4().hex[:4]
     return name[0:54]
 
@@ -331,7 +326,8 @@ def launch_pytorchjob(name, num_workers, image,working_dir, worker_command):
         # 实时打印日志
         line='>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
         print('begin follow log\n%s'%line, flush=True)
-        command = "stern %s --namespace %s --kubeconfig /root/.kube/%s-kubeconfig --exclude-container init-pytorch --tail 10 --template '{{.PodName}} {{.Message}}'"%(name,KFJ_NAMESPACE,os.getenv("KFJ_ENVIRONMENT",'dev'))
+        command = '''stern %s --namespace %s --exclude-container init-pytorch --since 10s --template '{{.PodName}} {{.Message}} {{"\\n"}}' '''%(name,KFJ_NAMESPACE)
+
         print(command, flush=True)
         run_shell(command)
         print('%s\nend follow log'%line, flush=True)
@@ -349,7 +345,7 @@ def launch_pytorchjob(name, num_workers, image,working_dir, worker_command):
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser("TFjob launcher")
+    arg_parser = argparse.ArgumentParser("Pytorchjob launcher")
     arg_parser.add_argument('--working_dir', type=str, help="运行job的工作目录", default='/mnt/')
     arg_parser.add_argument('--command', type=str, help="运行job的命令", default='python3 mnist.py')
     arg_parser.add_argument('--num_worker', type=int, help="运行job所在的机器", default=3)
@@ -358,11 +354,7 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     print("{} args: {}".format(__file__, args))
 
-    # 模板使用时需要添加kubeconfig挂载到/root/.kube/下面
-    config_path='/root/.kube/%s-kubeconfig'%os.getenv("KFJ_ENVIRONMENT",'dev')
-    if not os.path.exists(config_path):
-        print(config_path+" not exits")
-        exit(1)
+
     launch_pytorchjob(name=default_job_name(),num_workers=args.num_worker,image=args.image,working_dir=args.working_dir,worker_command=args.command)
 
 

@@ -162,7 +162,7 @@ class Service_Pipeline_ModelView_Base():
         ),
         "images":StringField(
                 _(datamodel.obj.lab('images')),
-                default='csighub.tencentyun.com/tme-kubeflow/service-pipeline',
+                default='ccr.ccs.tencentyun.com/cube-studio/service-pipeline',
                 description="推理服务镜像",
                 widget=BS3TextFieldWidget(),
                 validators=[DataRequired()]
@@ -203,7 +203,7 @@ class Service_Pipeline_ModelView_Base():
         "resource_cpu": StringField(_(datamodel.obj.lab('resource_cpu')), default=Service_Pipeline.resource_cpu.default.arg,
                                     description='cpu的资源使用限制(单位核)，示例 0.4，10，最大50核，如需更多联系管路员',
                                     widget=BS3TextFieldWidget(), validators=[DataRequired()]),
-        "resource_gpu": StringField(_(datamodel.obj.lab('resource_gpu')), default=0,
+        "resource_gpu": StringField(_(datamodel.obj.lab('resource_gpu')), default='0',
                                     description='gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100),目前支持T4/V100/A100/VGPU',
                                     widget=BS3TextFieldWidget()),
         "replicas": StringField(_(datamodel.obj.lab('replicas')), default=Service_Pipeline.replicas.default.arg,
@@ -374,7 +374,7 @@ class Service_Pipeline_ModelView_Base():
 
 
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(service_pipeline.project.cluster['KUBECONFIG'])
+        k8s_client = K8s(service_pipeline.project.cluster.get('KUBECONFIG',''))
         dag_json=service_pipeline.dag_json if service_pipeline.dag_json else '{}'
 
         # 生成服务使用的configmap
@@ -388,11 +388,12 @@ class Service_Pipeline_ModelView_Base():
             env['JAEGER_HOST']=conf.get('SERVICE_PIPELINE_JAEGER','')
             env['SERVICE_NAME'] = name
 
+        labels = {"app": name, "user": service_pipeline.created_by.username,"pod-type":"service-pipeline"}
         k8s_client.create_deployment(
             namespace=namespace,
             name=name,
             replicas=service_pipeline.replicas,
-            labels={"app":name,"username":service_pipeline.created_by.username},
+            labels=labels,
             # command=['sh','-c',command] if command else None,
             command=['bash', '-c', "python mq-pipeline/cube_kafka.py"],
             args=None,
@@ -402,7 +403,7 @@ class Service_Pipeline_ModelView_Base():
             resource_memory=service_pipeline.resource_memory,
             resource_cpu=service_pipeline.resource_cpu,
             resource_gpu=service_pipeline.resource_gpu if service_pipeline.resource_gpu else '',
-            image_pull_policy='Always',
+            image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
             image_pull_secrets=image_secrets,
             image=service_pipeline.images,
             hostAliases=conf.get('HOSTALIASES',''),
@@ -509,7 +510,7 @@ class Service_Pipeline_ModelView_Base():
         service_pipeline = db.session.query(Service_Pipeline).filter_by(id=service_pipeline_id).first()
 
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(service_pipeline.project.cluster['KUBECONFIG'])
+        k8s_client = K8s(service_pipeline.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('SERVICE_PIPELINE_NAMESPACE')
         k8s_client.delete_deployment(namespace=namespace, name=service_pipeline.name)
 
@@ -657,7 +658,7 @@ class Service_Pipeline_ModelView_Base():
                                 }
                             }
                         },
-                        "username": "pengluan",
+                        "username": g.user.username,
                         "changed_on": datetime.datetime.now(),
                         "created_on": datetime.datetime.now(),
                         "label": "kafka",
@@ -690,7 +691,7 @@ class Service_Pipeline_ModelView_Base():
                                 }
                             }
                         },
-                        "username": "pengluan",
+                        "username": g.user.username,
                         "changed_on": datetime.datetime.now(),
                         "created_on": datetime.datetime.now(),
                         "label": "switch-case逻辑节点",
@@ -780,7 +781,7 @@ class Service_Pipeline_ModelView_Base():
                                 }
                             }
                         },
-                        "username": "pengluan",
+                        "username": g.user.username,
                         "changed_on": datetime.datetime.now(),
                         "created_on": datetime.datetime.now(),
                         "label": "http请求",
@@ -811,7 +812,7 @@ class Service_Pipeline_ModelView_Base():
                                 },
                             }
                         },
-                        "username": "pengluan",
+                        "username": g.user.username,
                         "changed_on": datetime.datetime.now(),
                         "created_on": datetime.datetime.now(),
                         "label": "http请求",
@@ -833,7 +834,7 @@ class Service_Pipeline_ModelView_Base():
                 template['template_id'] = index
                 template['changed_on'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 template['created_on'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                template['username'] = 'pengluan'
+                template['username'] = g.user.username,
                 index += 1
 
         return jsonify(all_template)

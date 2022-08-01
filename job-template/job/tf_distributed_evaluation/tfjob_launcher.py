@@ -15,7 +15,7 @@ from job.pkgs.k8s.tfjob import TFJob
 from job.pkgs.utils import parse_timedelta
 
 EVALUATOR_SPEC = {
-    "image": "ai.tencentmusic.com/tme-public/tf2.3_model_evaluation:latest",
+    "image": "ccr.ccs.tencentyun.com/cube-studio/tf2.3_model_evaluation:latest",
     "cmd": ["python", "-m", "job.tf_model_evaluation.model_evaluation"]
 }
 
@@ -115,8 +115,6 @@ class TFJobLauncher(JobComponentRunner):
                      node_affin=None, pod_affin=None, job_labels={}, backoff_limits=3, job_timeout=None,
                      job_polling_interval=None, delete_after_finish=False, node_selector={}, privileged=False,
                      creator=''):
-
-        subprocess.check_call("echo '10.101.140.98 cls-g9v4gmm0.ccs.tencent-cloud.com' >> /etc/hosts", shell=True)
 
         k8s_config.load_incluster_config()
         k8s_api_client = k8s_client.ApiClient()

@@ -15,7 +15,7 @@ from flask_compress import Compress
 from flask_migrate import Migrate
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
-from werkzeug.contrib.fixers import ProxyFix
+from werkzeug.middleware.proxy_fix import ProxyFix
 import wtforms_json
 
 from myapp import config
@@ -41,7 +41,7 @@ conf = app.config
 
 if conf.get('DATA_DIR',''):
     if not os.path.exists(conf['DATA_DIR']):
-        os.makedirs(conf['DATA_DIR'])
+        os.makedirs(conf['DATA_DIR'],exist_ok=True)
 
 print(conf.get('SQLALCHEMY_DATABASE_URI',''))
 

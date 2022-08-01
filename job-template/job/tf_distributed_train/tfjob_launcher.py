@@ -19,11 +19,11 @@ TRAINER_TYPE_RUNNER = "runner"
 
 TRAINER_SPECS = {
     TRAINER_TYPE_PLAIN: {
-        "image": "ai.tencentmusic.com/tme-public/tf2.3_plain_train:latest",
+        "image": "ccr.ccs.tencentyun.com/cube-studio/tf2.3_plain_train:latest",
         "cmd": ["python3", "-m", "job.tf_plain_train.plain_train"]
     },
     TRAINER_TYPE_RUNNER: {
-        "image": "ai.tencentmusic.com/tme-public/tf2.3_keras_train:latest",
+        "image": "ccr.ccs.tencentyun.com/cube-studio/tf2.3_keras_train:latest",
         "cmd": ["python3", "-m", "job.tf_keras_train.runner_train"]
     }
 }
@@ -147,8 +147,6 @@ class TFJobLauncher(JobComponentRunner):
                      node_affin=None, pod_affin=None, job_labels={}, backoff_limits=3, job_timeout=None,
                      job_polling_interval=None, delete_after_finish=False, node_selector={}, privileged=False,
                      creator='', ps_resources=None, chief_resources=None):
-
-        subprocess.check_call("echo '10.101.140.98 cls-g9v4gmm0.ccs.tencent-cloud.com' >> /etc/hosts", shell=True)
 
         k8s_config.load_incluster_config()
         k8s_api_client = k8s_client.ApiClient()

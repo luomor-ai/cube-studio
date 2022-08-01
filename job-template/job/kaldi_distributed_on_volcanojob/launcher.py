@@ -18,7 +18,7 @@ import psutil
 import copy
 
 from job.pkgs.k8s.py_k8s import K8s
-k8s_client = K8s("/root/.kube/{}-kubeconfig".format(os.getenv("KFJ_ENVIRONMENT",'dev')))
+k8s_client = K8s()
 
 KFJ_NAMESPACE = os.getenv('KFJ_NAMESPACE', '')
 KFJ_TASK_ID = os.getenv('KFJ_TASK_ID', '')
@@ -77,9 +77,6 @@ def make_volcanojob(name, num_workers, image, working_dir, worker_command, maste
                 "imagePullSecrets": [
                     {
                         "name": "hubsecret"
-                    },
-                    {
-                        "name": "csig-hubsecret"
                     }
                 ],
                 "affinity": {
@@ -248,7 +245,7 @@ def launch_volcanojob(name, num_workers, image, working_dir, worker_command, mas
 
 		# 开子程程跟踪日志
     logging.info('Begin tracing logs')
-    command = "sh stern.sh '{name}' '{namespace}' '{env}'".format(name=name, namespace=KFJ_NAMESPACE, env=os.getenv("KFJ_ENVIRONMENT",'dev'))
+    command = "sh stern.sh '{name}' '{namespace}'".format(name=name, namespace=KFJ_NAMESPACE)
     log_proc = subprocess.Popen(command,stdin=subprocess.PIPE, stderr=subprocess.PIPE, \
                             stdout=subprocess.PIPE, universal_newlines=True, shell=True, bufsize=1)
 
@@ -294,9 +291,6 @@ if __name__ == "__main__":
 
     if not os.path.exists(args.working_dir):
         raise RuntimeError # (args.working_dir + " not exits!!!")
-    # 注入host到启动pod
-    if os.system("echo '10.101.140.98 cls-g9v4gmm0.ccs.tencent-cloud.com' >> /etc/hosts"):
-        raise RuntimeError # ("Init hosts fail!!!")
     # 创建run_dir到工作目录
     run_dir = "{}/run_{}/".format(args.working_dir, KFJ_RUN_ID)
     if os.system("mkdir -p {}".format(run_dir)):

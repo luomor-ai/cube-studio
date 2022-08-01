@@ -47,7 +47,6 @@ from .base import (
     api,
     BaseMyappView,
     check_ownership,
-    CsvResponse,
     data_payload_response,
     DeleteMixin,
     generate_download_headers,
@@ -94,7 +93,7 @@ class KfService_ModelView(MyappModelView):
     def deploy1(self,kfservice_id):
         mykfservice = db.session.query(KfService).filter_by(id=kfservice_id).first()
         from myapp.utils.py.py_k8s import K8s
-        k8s = K8s(mykfservice.project.cluster['KUBECONFIG'])
+        k8s = K8s(mykfservice.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('KFSERVING_NAMESPACE')
         crd_info = conf.get('CRD_INFO')['inferenceservice']
         crd_list = k8s.get_crd(group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],
@@ -147,7 +146,7 @@ class KfService_ModelView(MyappModelView):
                     "imagePullSecrets": [{"name":hubsecret} for hubsecret in image_secrets],
                     "container": {
                         "image": service.images,
-                        "imagePullPolicy": 'Always',
+                        "imagePullPolicy": conf.get('IMAGE_PULL_POLICY','Always'),
                         "name": mykfservice.name+"-"+service.name,
                         "workingDir": service.working_dir if service.working_dir else None,
                         "command": ["sh", "-c",service.command] if service.command else None,
@@ -230,7 +229,7 @@ class KfService_ModelView(MyappModelView):
                                            command=["sh", "-c",service.command] if service.command else None,
                                            args=None,
                                            volume_mount=None,
-                                           image_pull_policy='Always',
+                                           image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                                            image=service.images,
                                            working_dir=service.working_dir if service.working_dir else None,
                                            env=service.env,
@@ -310,7 +309,7 @@ class KfService_ModelView(MyappModelView):
                                            command=["sh", "-c", service.command] if service.command else None,
                                            args=None,
                                            volume_mount=None,
-                                           image_pull_policy='Always',
+                                           image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                                            image=service.images,
                                            working_dir=service.working_dir if service.working_dir else None,
                                            env=service.env,
@@ -347,7 +346,7 @@ class KfService_ModelView(MyappModelView):
             abort(404)
         for item in items:
             try:
-                k8s_client = py_k8s.K8s(item.project.cluster['KUBECONFIG'])
+                k8s_client = py_k8s.K8s(item.project.cluster.get('KUBECONFIG',''))
                 crd_info = conf.get("CRD_INFO", {}).get(self.crd_name, {})
                 if crd_info:
                     k8s_client.delete_crd(group=crd_info['group'],version=crd_info['version'],plural=crd_info['plural'],namespace=conf.get('KFSERVING_NAMESPACE'),name=item.name)

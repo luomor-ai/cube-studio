@@ -225,7 +225,9 @@ def dag_to_pipeline(pipeline,dbsession,**kwargs):
         container_envs.append(V1EnvVar("KFJ_TASK_RESOURCE_CPU", str(task.resource_cpu)))
         container_envs.append(V1EnvVar("KFJ_TASK_RESOURCE_MEMORY", str(task.resource_memory)))
         container_envs.append(V1EnvVar("KFJ_TASK_RESOURCE_GPU", str(task.resource_gpu.replace("+",''))))
+        container_envs.append(V1EnvVar("KFJ_TASK_PROJECT_NAME", str(pipeline.project.name)))
         container_envs.append(V1EnvVar("GPU_TYPE", os.environ.get("GPU_TYPE", "NVIDIA")))
+        container_envs.append(V1EnvVar("USERNAME", pipeline.created_by.username))
 
         container_kwargs['env']=container_envs
 
@@ -509,8 +511,8 @@ def dag_to_pipeline(pipeline,dbsession,**kwargs):
 
 
     # 配置默认拉取策略
-    if pipeline.image_pull_policy:
-        pipeline_conf.image_pull_policy = pipeline.image_pull_policy
+    # if pipeline.image_pull_policy:
+    pipeline_conf.image_pull_policy = conf.get('IMAGE_PULL_POLICY','Always')
 
     # 设置并发
     if pipeline.parallelism:
@@ -634,6 +636,12 @@ class Pipeline_ModelView_Base():
             widget=BS3TextFieldWidget(),
             validators=[Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"),Length(1,54),DataRequired()]
         ),
+        "describe": StringField(
+            _(datamodel.obj.lab('describe')),
+            description="中文描述",
+            widget=BS3TextFieldWidget(),
+            validators=[DataRequired()]
+        ),
         "project":QuerySelectField(
             _(datamodel.obj.lab('project')),
             query_factory=filter_join_org_project,
@@ -696,6 +704,7 @@ class Pipeline_ModelView_Base():
         ),
         "schedule_type":SelectField(
             _(datamodel.obj.lab('schedule_type')),
+            default='once',
             description="调度类型，once仅运行一次，crontab周期运行，crontab配置保存一个小时候后才生效",
             widget=Select2Widget(),
             choices=[['once','once'],['crontab','crontab']]
@@ -861,7 +870,7 @@ class Pipeline_ModelView_Base():
 
     def pre_update_get(self,item):
         item.dag_json = item.fix_dag_json()
-        # item.expand = json.dumps(item.fix_expand(),indent=4,ensure_ascii=False)
+        item.expand = json.dumps(item.fix_expand(),indent=4,ensure_ascii=False)
         db.session.commit()
 
     # 删除前先把下面的task删除了
@@ -973,7 +982,7 @@ class Pipeline_ModelView_Base():
                     db_crd = db.session.query(Workflow).filter_by(name=crd['name']).first()
                     pipeline = db_crd.pipeline
                     if pipeline:
-                        k8s_client = py_k8s.K8s(pipeline.project.cluster['KUBECONFIG'])
+                        k8s_client = py_k8s.K8s(pipeline.project.cluster.get('KUBECONFIG',''))
                     else:
                         k8s_client = py_k8s.K8s()
 
@@ -1026,9 +1035,6 @@ class Pipeline_ModelView_Base():
         pipeline.delete_old_task()
 
         time.sleep(1)
-        # if pipeline.changed_on+datetime.timedelta(seconds=5)>datetime.datetime.now():
-        #     flash("发起运行实例，太过频繁，5s后重试",category='warning')
-        #     return redirect('/pipeline_modelview/list/?_flt_2_name=')
         back_crds = pipeline.get_workflow()
 
         # 把消息加入到源数据库
@@ -1100,17 +1106,18 @@ class Pipeline_ModelView_Base():
     def web(self,pipeline_id):
         pipeline = db.session.query(Pipeline).filter_by(id=pipeline_id).first()
 
-        pipeline.dag_json = pipeline.fix_dag_json()
-        # pipeline.expand = json.dumps(pipeline.fix_expand(), indent=4, ensure_ascii=False)
-        pipeline.expand = json.dumps(pipeline.fix_position(), indent=4, ensure_ascii=False)
+        pipeline.dag_json = pipeline.fix_dag_json()  # 修正 dag_json
+        pipeline.expand = json.dumps(pipeline.fix_expand(), indent=4, ensure_ascii=False)   # 修正 前端expand字段缺失
+        pipeline.expand = json.dumps(pipeline.fix_position(), indent=4, ensure_ascii=False)  # 修正 节点中心位置到视图中间
 
+        # # 自动排版
         # db_tasks = pipeline.get_tasks(db.session)
         # if db_tasks:
         #     try:
         #         tasks={}
         #         for task in db_tasks:
         #             tasks[task.name]=task.to_json()
-        #         expand = core.fix_task_position(pipeline.to_json(),tasks)
+        #         expand = core.fix_task_position(pipeline.to_json(),tasks,json.loads(pipeline.expand))
         #         pipeline.expand=json.dumps(expand,indent=4,ensure_ascii=False)
         #         db.session.commit()
         #     except Exception as e:
@@ -1173,7 +1180,7 @@ class Pipeline_ModelView_Base():
     def web_pod(self,pipeline_id):
         pipeline = db.session.query(Pipeline).filter_by(id=pipeline_id).first()
         data = {
-            "url": pipeline.project.cluster.get('K8S_DASHBOARD_CLUSTER', '') + '#/search?namespace=%s&q=%s' % (conf.get('PIPELINE_NAMESPACE'), pipeline.name.replace('_', '-')),
+            "url": pipeline.project.cluster.get('K8S_DASHBOARD_CLUSTER', '') + '#/search?namespace=%s&q=%s' % (conf.get('PIPELINE_NAMESPACE'), pipeline.name.replace('_', '-').lower()),
             "target":"div.kd-chrome-container.kd-bg-background",
             "delay":500,
             "loading": True

@@ -7,7 +7,7 @@ RUN apt install -y python3.6-dev python3-pip libsasl2-dev libpq-dev \
     && ln -s /usr/bin/python3 /usr/bin/python \
     && ln -s /usr/bin/pip3 /usr/bin/pip
 
-RUN wget https://github.com/wercker/stern/releases/download/1.11.0/stern_linux_amd64 && chmod +x stern_linux_amd64 &&  mv stern_linux_amd64 /usr/bin/stern
+RUN wget https://github.com/stern/stern/releases/download/v1.21.0/stern_1.21.0_linux_amd64.tar.gz && tar -zxvf stern_1.21.0_linux_amd64.tar.gz && rm stern_1.21.0_linux_amd64.tar.gz && chmod +x stern &&  mv stern /usr/bin/stern
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && mv kubectl /usr/bin/
 
 # 安装中文
@@ -25,8 +25,6 @@ RUN echo "alias ll='ls -alF'" >> /root/.bashrc && \
 
 RUN pip install kubernetes==12.0.1 pysnooper psutil
 COPY job/volcano/* /app/
-#COPY job/pkgs/config/ubuntu-sources.list /etc/apt/sources.list
-#COPY job/pkgs/config/pip.conf /root/.pip/pip.conf
 COPY job/pkgs /app/job/pkgs
 WORKDIR /app
 ENV PYTHONPATH=/app:$PYTHONPATH

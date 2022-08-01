@@ -13,6 +13,7 @@ import logging
 from flask_babel import lazy_gettext,gettext
 import re
 import copy
+from sqlalchemy.exc import InvalidRequestError
 import uuid
 import requests
 from myapp.exceptions import MyappException
@@ -30,6 +31,7 @@ from myapp.forms import MyBS3TextAreaFieldWidget,MySelect2Widget,MyCodeArea,MyLi
 from myapp.utils.py import py_k8s
 import os, zipfile
 import shutil
+from myapp.views.view_team import Project_Filter,Project_Join_Filter,filter_join_org_project
 from myapp.views.view_team import filter_join_org_project
 from flask import (
     current_app,
@@ -82,17 +84,17 @@ class InferenceService_Filter(MyappFilter):
         return query.filter(self.model.project_id.in_(join_projects_id))
 
 
-class InferenceService_ModelView(MyappModelView):
+class InferenceService_ModelView_base():
     datamodel = SQLAInterface(InferenceService)
     check_redirect_list_url = '/inferenceservice_modelview/list/'
     help_url = conf.get('HELP_URL', {}).get('inferenceservice','')
     # 外层的add_column和edit_columns 还有show_columns 一定要全，不然在gunicorn形式下get的不一定能被翻译
     # add_columns = ['service_type','project','name', 'label','images','resource_memory','resource_cpu','resource_gpu','min_replicas','max_replicas','ports','host','hpa','metrics','health']
-    add_columns = ['service_type', 'project', 'label', 'model_name', 'model_version', 'images', 'model_path', 'model_input', 'model_output', 'resource_memory', 'resource_cpu', 'resource_gpu', 'min_replicas', 'max_replicas', 'hpa', 'canary', 'shadow', 'host', 'command', 'working_dir', 'env', 'ports', 'metrics', 'health', 'expand']
+    add_columns = ['service_type', 'project', 'label', 'model_name', 'model_version', 'images', 'model_path', 'model_input', 'model_output', 'resource_memory', 'resource_cpu', 'resource_gpu', 'min_replicas', 'max_replicas', 'hpa', 'canary', 'shadow', 'host', 'command', 'working_dir','volume_mount', 'env', 'ports', 'metrics', 'health', 'expand']
     show_columns = ['service_type','project', 'name', 'label','model_name', 'model_version', 'images', 'model_path', 'input_html', 'output_html', 'images', 'volume_mount','working_dir', 'command', 'env', 'resource_memory',
                     'resource_cpu', 'resource_gpu', 'min_replicas', 'max_replicas', 'ports', 'inference_host_url','hpa', 'canary', 'shadow', 'health','model_status', 'expand_html','metrics_html','deploy_history' ]
 
-    list_columns = ['project','service_type','model_name_url','model_version','inference_host_url','model_status','creator','modified','operate_html']
+    list_columns = ['project','service_type','model_name_url','model_version','inference_host_url','ip','model_status','creator','modified','operate_html']
     edit_columns = add_columns
     label_title = '推理服务'
     base_order = ('id','desc')
@@ -122,15 +124,15 @@ class InferenceService_ModelView(MyappModelView):
                                     validators=[DataRequired()]),
         "host": StringField(_(datamodel.obj.lab('host')), default=InferenceService.host.default.arg,description='访问域名，xx.serving.%s'%conf.get('ISTIO_INGRESS_DOMAIN',''),widget=BS3TextFieldWidget()),
         "transformer":StringField(_(datamodel.obj.lab('transformer')), default=InferenceService.transformer.default.arg,description='前后置处理逻辑，用于原生开源框架的请求预处理和响应预处理，目前仅支持kfserving下框架',widget=BS3TextFieldWidget()),
-        'resource_gpu':StringField(_(datamodel.obj.lab('resource_gpu')), default=0,
+        'resource_gpu':StringField(_(datamodel.obj.lab('resource_gpu')), default='0',
                                                         description='gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100),目前支持T4/V100/A100/VGPU',
-                                                        widget=BS3TextFieldWidget()),
+                                                        widget=BS3TextFieldWidget(),validators=[DataRequired()]),
 
         'sidecar': MySelectMultipleField(
             _(datamodel.obj.lab('sidecar')), default='',
             description='容器的agent代理',
             widget=Select2ManyWidget(),
-            choices=[['L5', 'L5'], ['DC', 'DC']]
+            choices=[]
         )
     }
 
@@ -142,10 +144,11 @@ class InferenceService_ModelView(MyappModelView):
     def set_column(self, service=None):
         # 对编辑进行处理
         request_data = request.args.to_dict()
-        service_type = request_data.get('service_type', '')
+        service_type = request_data.get('service_type', 'service')
         if service:
             service_type = service.service_type
 
+        readonly = 1 if service else 0
 
         if service:
             self.add_form_extra_fields['service_type'] = SelectField(
@@ -168,15 +171,15 @@ class InferenceService_ModelView(MyappModelView):
             _('模型名称'),
             default=service.model_name if service else '',
             description='英文名(字母、数字、- 组成)，最长50个字符',
-            widget=BS3TextFieldWidget(),
+            widget=MyBS3TextFieldWidget(readonly=readonly),
             validators=[DataRequired(),Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"), Length(1, 54)]
         )
         self.add_form_extra_fields['model_version'] = StringField(
             _('模型版本号'),
             default=service.model_version if service else datetime.datetime.now().strftime('v%Y.%m.%d.1'),
             description='版本号，时间格式',
-            widget=BS3TextFieldWidget(),
-            validators=[DataRequired(),Regexp("^v[0-9.]*$"), Length(1, 54)]
+            widget=MyBS3TextFieldWidget(),
+            validators=[DataRequired(),Regexp("^[v0-9.]*$"), Length(1, 54)]
         )
         self.add_form_extra_fields['model_path'] = StringField(
             _('模型地址'),
@@ -207,7 +210,7 @@ class InferenceService_ModelView(MyappModelView):
                 _(self.datamodel.obj.lab('images')),
                 default=service.images if service else '',
                 description="推理服务镜像",
-                widget=Select2Widget(),
+                widget=MySelect2Widget(can_input=True),
                 choices=[[x,x] for x in images]
             )
         self.add_form_extra_fields['command'] = StringField(
@@ -260,7 +263,7 @@ class InferenceService_ModelView(MyappModelView):
         self.add_form_extra_fields["hpa"]=StringField(
             _(self.datamodel.obj.lab('hpa')),
             default=service.hpa if service else 'cpu:50%,gpu:50%',
-            description='弹性伸缩容的触发条件：可以使用cpu/mem/gpu/qps等信息，可以使用其中一个指标或者多个指标，示例：cpu:50%,mem:%50,gpu:50%',
+            description='弹性伸缩容的触发条件：可以使用cpu/mem/gpu/qps等信息，可以使用其中一个指标或者多个指标，示例：cpu:50%,mem:50%,gpu:50%',
             widget=BS3TextFieldWidget()
         )
 
@@ -279,19 +282,36 @@ class InferenceService_ModelView(MyappModelView):
         )
 
         self.add_form_extra_fields['shadow'] = StringField(
-            _('流量镜像'),
+            _('流量复制'),
             default=json.loads(service.expand).get('shadow','') if service else '',
-            description='流量镜像，将该服务的所有请求，按比例复制到目标服务上，格式 service1:20%,service2:30%，表示复制20%流量到service1，30%到service2',
+            description='流量复制，将该服务的所有请求，按比例复制到目标服务上，格式 service1:20%,service2:30%，表示复制20%流量到service1，30%到service2',
+            widget=BS3TextFieldWidget()
+        )
+        self.add_form_extra_fields['volume_mount'] = StringField(
+            _(self.datamodel.obj.lab('volume_mount')),
+            default=service.project.volume_mount if service else '',
+            description='外部挂载，格式:$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,4G(memory):/dev/shm,注意pvc会自动挂载对应目录下的个人rtx子目录',
             widget=BS3TextFieldWidget()
         )
 
 
         model_columns = ['service_type', 'project', 'label', 'model_name', 'model_version', 'images', 'model_path']
-        service_columns = ['resource_memory', 'resource_cpu','resource_gpu', 'min_replicas', 'max_replicas', 'hpa','canary','shadow','host','sidecar']
+        service_columns = ['resource_memory', 'resource_cpu','resource_gpu', 'min_replicas', 'max_replicas', 'hpa','canary','shadow','host','volume_mount']
         admin_columns = ['command','working_dir','env','ports','metrics','health','expand']
 
+        self.add_form_extra_fields['model_path'] = StringField(
+            _('模型地址'),
+            default=service.model_path if service else '',
+            description=Markup('tfserving：仅支持tf save_model的模型存储方式<br>'
+                               'torch-server：需保存完整模型信息，包括模型结构和模型参数，或者使用torch-model-archiver编译后的mar模型文件<br>'
+                               'onnxruntime：onnx模型文件的地址<br>'
+                               'triton-server：框架:地址,onnx:模型文件地址model.onnx，pytorch:torchscript模型文件地址model.pt，tf:模型目录地址saved_model，tensorrt:模型文件地址model.plan'),
+            widget=BS3TextFieldWidget(),
+            # validators=[DataRequired()]
+        )
 
-        if service_type=='tfserving' or service_type=='kfserving-tf':
+
+        if service_type=='tfserving':
             self.add_form_extra_fields['model_path'] = StringField(
                 _('模型地址'),
                 default=service.model_path if service else '/mnt/.../saved_model',
@@ -301,7 +321,7 @@ class InferenceService_ModelView(MyappModelView):
             )
 
 
-        if service_type=='torch-server' or service_type=='kfserving-torch':
+        if service_type=='torch-server':
             self.add_form_extra_fields['model_path'] = StringField(
                 _('模型地址'),
                 default=service.model_path if service else '/mnt/.../$model_name.mar',
@@ -320,7 +340,7 @@ class InferenceService_ModelView(MyappModelView):
             model_columns.append('model_type')
 
 
-        if service_type=='onnxruntime' or service_type=='kfserving-onnx':
+        if service_type=='onnxruntime':
             self.add_form_extra_fields['model_path'] = StringField(
                 _('模型地址'),
                 default=service.model_path if service else '/mnt/.../$model_name.onnx',
@@ -569,9 +589,6 @@ instance_group [
         # 先存储特定参数到expand
         expand = json.loads(item.expand) if item.expand else {}
         print(self.src_item_json)
-        expand['service_token'] = json.loads(self.src_item_json['expand']).get('service_token','') if item.id else ''
-        expand['alias_token'] = json.loads(self.src_item_json['expand']).get('alias_token', '') if item.id else ''
-        expand['alias_l5'] = json.loads(self.src_item_json['expand']).get('alias_l5', '') if item.id else ''
         model_version = item.model_version.replace('v','').replace('.','').replace(':','')
 
         if item.service_type=='tfserving':
@@ -634,9 +651,8 @@ instance_group [
         self.use_expand(item)
 
     def delete_old_service(self,service_name,cluster):
-
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(cluster['KUBECONFIG'])
+        k8s_client = K8s(cluster.get('KUBECONFIG',''))
         service_namespace = conf.get('SERVICE_NAMESPACE')
         kfserving_namespace = conf.get('KFSERVING_NAMESPACE')
         for namespace in [service_namespace,kfserving_namespace]:
@@ -654,81 +670,41 @@ instance_group [
 
     # @pysnooper.snoop(watch_explode=('item',))
     def pre_update(self, item):
+        if not item.volume_mount:
+            item.volume_mount=item.project.volume_mount
+        item.name = item.name.replace("_","-")
         # 修改了名称的话，要把之前的删掉
         self.use_expand(item)
+
+        # 如果模型版本和名称变了，需要把之前的服务删除掉
+        if self.src_item_json.get('name','') and item.name!=self.src_item_json.get('name',''):
+            self.delete_old_service(self.src_item_json.get('name',''), item.project.cluster)
+            flash('发现模型服务变更，启动清理服务%s:%s'%(self.src_item_json.get('model_name',''),self.src_item_json.get('model_version','')),'success')
+
 
     def pre_delete(self, item):
         self.delete_old_service(item.name,item.project.cluster)
         flash('服务已清理完成', category='warning')
 
     @expose('/clear/<service_id>', methods=['POST', "GET"])
-    # @pysnooper.snoop()
     def clear(self, service_id):
         service = db.session.query(InferenceService).filter_by(id=service_id).first()
-        self.delete_old_service(service.name,service.project.cluster)
-        service.model_status='offline'
-        if not service.deploy_history:
-            service.deploy_history=''
-        service.deploy_history = service.deploy_history + "\n" + "clear：%s" % datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        db.session.commit()
-        flash('服务清理完成', category='warning')
+        if service:
+	        self.delete_old_service(service.name,service.project.cluster)
+	        service.model_status='offline'
+	        if not service.deploy_history:
+	            service.deploy_history=''
+	        service.deploy_history = service.deploy_history + "\n" + "clear：%s" % datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+	        db.session.commit()
+	        flash('服务清理完成', category='warning')
         return redirect('/inferenceservice_modelview/list/')
-
-    # @pysnooper.snoop()
-    def create_polaris(self,service):
-        try:
-            # l5的值创建以后是不应该变的，一个服务对应一个固定的l5，不然客户端需要修改代码
-            from myapp.utils.py.py_polaris import Polaris
-            polaris = Polaris()
-
-            alias_token = json.loads(service.expand).get('alias_token','') if service.expand else ''
-            alias_l5 = json.loads(service.expand).get('alias_l5','') if service.expand else ''   # 只创建一次
-            service_name = '%s.service' % (service.name)
-            username = service.created_by.username + "," + conf.get('ADMIN_USER')
-
-            if not alias_l5:
-
-                alias = polaris.get_alias(service_name)
-                if len(alias)>0 and alias[0]['alias']!=alias_l5:
-                    flash('创建失败，存在系统无法识别的北极星别名，请先联系管理员手动处理','warning')
-                    return
-
-                polaris.delete_instances(service_name)
-                polaris.delete_alias(service_name,alias_token)
-                polaris.delete_service(service_name)
-                polaris_service = polaris.register_service(username, service_name)
-                print(polaris_service)
-                service_token = polaris_service['token'] if polaris_service else ''
-
-                alias = polaris.register_alias(username, service_name)
-
-                expand = json.loads(service.expand) if service.expand else {}
-                expand.update(
-                    {
-                        "service_token": service_token,
-                        "alias_token": alias['service_token'],
-                        "alias_l5": alias['alias'],
-                    }
-                )
-                service.expand = json.dumps(expand, indent=4, ensure_ascii=False)
-                db.session.commit()
-
-
-            polaris.delete_instances(service_name)
-            instances = polaris.register_instances(service_name,conf.get('SERVICE_EXTERNAL_IP'),30000+10*service.id)
-            print(instances)
-
-
-        except Exception as e:
-            print(e)
-            flash('部署北极星失败:%s'%str(e),'warning')
 
     #
     # # 针对kfserving框架，单独的部署方式
     # @pysnooper.snoop()
     # def deploy_kfserving(self,service):
     #     from myapp.utils.py.py_k8s import K8s
-    #     k8s_client = K8s(service.project.cluster['KUBECONFIG'])
+    #     k8s_client = K8s(service.project.cluster.get('KUBECONFIG',''))
     #     namespace = conf.get('KFSERVING_NAMESPACE')
     #
     #     crd_info=conf.get('CRD_INFO')['inferenceservice']
@@ -771,7 +747,7 @@ instance_group [
     #     return redirect('/inferenceservice_modelview/list/')
 
 
-    @expose('/debug/<service_id>',methods=['POST',"GET"])
+    @expose('/deploy/debug/<service_id>',methods=['POST',"GET"])
     # @pysnooper.snoop()
     def deploy_debug(self,service_id):
         return self.deploy(service_id,env='debug')
@@ -787,11 +763,88 @@ instance_group [
         return self.deploy(service_id,env='prod')
 
 
+    @expose('/deploy/update/', methods=['POST','GET'])
+    # @pysnooper.snoop(watch_explode=('deploy'))
+    def update_service(self):
+        args = request.json if request.json else {}
+        namespace = conf.get('SERVICE_NAMESPACE', 'service')
+        args.update(request.args)
+        service_id = int(args.get('service_id',0))
+        service_name = args.get('service_name', '')
+        model_name = args.get('model_name', '')
+        model_version = args.get('model_version', '')
+        env = args.get('env', '')   #  所处环境
+        area = args.get('area','')
+        service=None
+
+        if service_id:
+            service = db.session.query(InferenceService).filter_by(id=service_id).first()
+        elif service_name:
+            service = db.session.query(InferenceService).filter_by(name=service_name).first()
+        elif model_name:
+            if model_version:
+                service = db.session.query(InferenceService)\
+                    .filter(InferenceService.model_name == model_name)\
+                    .filter(InferenceService.model_version == model_version)\
+                    .filter(InferenceService.model_status == 'online')\
+                    .order_by(InferenceService.id.desc()).first()
+            else:
+                service = db.session.query(InferenceService)\
+                    .filter(InferenceService.model_name==model_name)\
+                    .filter(InferenceService.model_status=='online')\
+                    .order_by(InferenceService.id.desc()).first()
+
+        if service:
+            status=0
+            message='success'
+            if request.method=='POST':
+                min_replicas = int(args.get('min_replicas',0))
+                if min_replicas:
+                    service.min_replicas = min_replicas
+                    if service.max_replicas < min_replicas:
+                        service.max_replicas=min_replicas
+                    db.session.commit()
+                    try:
+                        self.deploy(service.id)
+                    except Exception as e:
+                        print(e)
+                        status=-1
+                        message=str(e)
+                time.sleep(3)
+
+
+            from myapp.utils.py.py_k8s import K8s
+            k8s_client = K8s(service.project.cluster.get('KUBECONFIG',''))
+            deploy=None
+            try:
+                deploy = k8s_client.AppsV1Api.read_namespaced_deployment(name=service.name,namespace=namespace)
+            except Exception as e:
+                print(e)
+                status=-1,
+                message=str(e)
+
+            back={
+                "result": {
+                    "service":service.to_json(),
+                    "deploy":deploy.to_dict() if deploy else {}
+                },
+                "status": status,
+                "message": message
+            }
+
+            return jsonify(back)
+
+        else:
+            return jsonify({
+                "result":"",
+                "status":-1,
+                "message":"service not exist or service not online"
+            })
+
     @pysnooper.snoop()
     def deploy(self,service_id,env='prod'):
         service = db.session.query(InferenceService).filter_by(id=service_id).first()
         namespace = conf.get('SERVICE_NAMESPACE','service')
-        pre_namespace = conf.get('PRE_SERVICE_NAMESPACE','pre-service')
         name =  service.name
         command = service.command
         deployment_replicas = service.min_replicas
@@ -817,7 +870,7 @@ instance_group [
 
 
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(service.project.cluster['KUBECONFIG'])
+        k8s_client = K8s(service.project.cluster.get('KUBECONFIG',''))
 
         expand=json.loads(service.expand)
         config_data={}
@@ -850,6 +903,7 @@ instance_group [
         pod_env+='\nKUBEFLOW_MODEL_VERSION='+service.model_version
         pod_env+='\nKUBEFLOW_MODEL_IMAGES='+service.images
         pod_env+='\nKUBEFLOW_MODEL_NAME='+service.model_name
+        pod_env += '\nKUBEFLOW_AREA=' + json.loads(service.project.expand).get('area','guangzhou')
         pod_env=pod_env.strip(',')
 
 
@@ -859,12 +913,30 @@ instance_group [
             except Exception as e:
                 print(e)
         # 因为所有的服务流量通过ingress实现，所以没有isito的envoy代理
+        labels = {"app":name,"user":service.created_by.username,'pod-type':"inference"}
+
         try:
+            pod_ports = copy.deepcopy(ports)
+            try:
+                if service.metrics.strip():
+                    metrics_port = int(service.metrics[:service.metrics.index(":")])
+                    pod_ports.append(metrics_port)
+            except Exception as e:
+                print(e)
+
+            try:
+                if service.health.strip():
+                    health_port = int(service.health[:service.health.index(":")])
+                    pod_ports.append(health_port)
+            except Exception as e:
+                print(e)
+
+            pod_ports = list(set(pod_ports))
             k8s_client.create_deployment(
                 namespace=namespace,
                 name=name,
                 replicas=deployment_replicas,
-                labels={"app":name,"username":service.created_by.username},
+                labels=labels,
                 command=['sh','-c',command] if command else None,
                 args=None,
                 volume_mount=volume_mount,
@@ -873,7 +945,7 @@ instance_group [
                 resource_memory=service.resource_memory,
                 resource_cpu=service.resource_cpu,
                 resource_gpu=service.resource_gpu if service.resource_gpu else '',
-                image_pull_policy='Always',
+                image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                 image_pull_secrets=image_secrets,
                 image=service.images,
                 hostAliases=conf.get('HOSTALIASES',''),
@@ -881,8 +953,8 @@ instance_group [
                 privileged=False,
                 accounts=None,
                 username=service.created_by.username,
-                ports=ports,
-                health=service.health if ':' in service.health else None
+                ports=pod_ports,
+                health=service.health if ':' in service.health and env!='debug' else None
             )
         except Exception as e:
             flash('deploymnet:'+str(e),'warning')
@@ -903,13 +975,12 @@ instance_group [
             name=name,
             username=service.created_by.username,
             ports=ports,
-            annotations=annotations
+            annotations=annotations,
+            selector=labels
         )
         # 如果域名配置的gateway，就用这个
-        if 'kfserving' in service.service_type:
-            host = service.name + "." + service.project.cluster.get('KFSERVING_DOMAIN', conf.get('KFSERVING_DOMAIN'))
-        else:
-            host = service.name+"."+ service.project.cluster.get('SERVICE_DOMAIN',conf.get('SERVICE_DOMAIN'))
+
+        host = service.name+"."+ service.project.cluster.get('SERVICE_DOMAIN',conf.get('SERVICE_DOMAIN'))
 
         if service.host:
             host=service.host.replace('http://','').replace('https://','').strip()
@@ -930,24 +1001,43 @@ instance_group [
         )
 
 
-        # # 以ip形式访问的话，使用的代理ip。不然不好处理机器服务化机器扩容和缩容时ip变化
-        # SERVICE_EXTERNAL_IP = conf.get('SERVICE_EXTERNAL_IP',None)
-        # if SERVICE_EXTERNAL_IP:
-        #     service_ports = [[20000+10*service.id+index,port] for index,port in enumerate(ports)]
-        #     service_external_name = (service.name + "-external").lower()[:60].strip('-')
-        #     k8s_client.create_service(
-        #         namespace=namespace,
-        #         name=service_external_name,
-        #         username=service.created_by.username,
-        #         ports=service_ports,
-        #         selector={"app": service.name, 'user': service.created_by.username},
-        #         externalIPs=conf.get('SERVICE_EXTERNAL_IP',None)
-        #     )
-        #     self.create_polaris(service)
+        # 以ip形式访问的话，使用的代理ip。不然不好处理机器服务化机器扩容和缩容时ip变化
 
-        if env!='debug':
+        SERVICE_EXTERNAL_IP=[]
+        # 使用项目组ip
+        if service.project.expand:
+            ip = json.loads(service.project.expand).get('SERVICE_EXTERNAL_IP', '')
+            if ip and type(SERVICE_EXTERNAL_IP)==str:
+                SERVICE_EXTERNAL_IP = [ip]
+
+        # 使用全局ip
+        if not SERVICE_EXTERNAL_IP:
+            SERVICE_EXTERNAL_IP = conf.get('SERVICE_EXTERNAL_IP', None)
+
+        # 使用当前ip
+        if not SERVICE_EXTERNAL_IP:
+            ip = request.host[:request.host.rindex(':')] if ':' in request.host else request.host # 如果捕获到端口号，要去掉
+            if core.checkip(ip):
+                SERVICE_EXTERNAL_IP=[ip]
+
+
+        if SERVICE_EXTERNAL_IP:
+            service_ports = [[20000+10*service.id+index,port] for index,port in enumerate(ports)]
+            service_external_name = (service.name + "-external").lower()[:60].strip('-')
+            k8s_client.create_service(
+                namespace=namespace,
+                name=service_external_name,
+                username=service.created_by.username,
+                ports=service_ports,
+                selector=labels,
+                external_ip=SERVICE_EXTERNAL_IP
+            )
+
+
+        if env=='prod':
             hpas = re.split(',|;', service.hpa)
-            if not int(service.resource_gpu):
+            regex = re.compile(r"\(.*\)")
+            if not int(regex.sub('', service.resource_gpu)):
                 for hpa in copy.deepcopy(hpas):
                     if 'gpu' in hpa:
                         hpas.remove(hpa)
@@ -955,6 +1045,7 @@ instance_group [
             # 伸缩容
             if int(service.max_replicas)>int(service.min_replicas) and service.hpa:
                 try:
+                    # 创建+绑定deployment
                     k8s_client.create_hpa(
                         namespace=namespace,
                         name=name,
@@ -978,7 +1069,7 @@ instance_group [
 
         if env=='prod':
             service.model_status = 'online'
-        service.deploy_history=service.deploy_history+"\n"+"deploy %s：%s"%(env,datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        service.deploy_history=service.deploy_history+"\n"+"deploy %s: %s %s"%(env,g.user.username,datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         db.session.commit()
         if env=="debug":
             time.sleep(2)
@@ -986,13 +1077,68 @@ instance_group [
             if pods:
                 pod = pods[0]
                 return redirect("/myapp/web/debug/%s/%s/%s/%s" % (service.project.cluster['NAME'], namespace, pod['name'],name))
-        flash('服务部署完成',category='success')
+
+        # 生产环境才有域名代理灰度的问题
+        if env=='prod':
+            from myapp.tasks.async_task import upgrade_service
+            kwargs = {
+                "service_id": service.id,
+                "name":service.name,
+                "namespace":namespace
+            }
+            upgrade_service.apply_async(kwargs=kwargs)
+
+        flash('服务部署完成，正在进行同域名服务版本切换', category='success')
         return redirect('/inferenceservice_modelview/list/')
 
 
+    @action(
+        "copy", __("Copy service"), confirmation=__('Copy Service'), icon="fa-copy",multiple=True, single=False
+    )
+    def copy(self, services):
+        if not isinstance(services, list):
+            services = [services]
+        try:
+            for service in services:
+                new_services = service.clone()
+                index=1
+                model_version = datetime.datetime.now().strftime('v%Y.%m.%d.1')
+                while True:
+                    model_version = datetime.datetime.now().strftime('v%Y.%m.%d.'+str(index))
+                    exits_service = db.session.query(InferenceService).filter_by(model_version=model_version).filter_by(model_name=new_services.model_name).first()
+                    if exits_service:
+                        index+=1
+                    else:
+                        break
 
+                new_services.model_version=model_version
+                new_services.name = new_services.service_type+"-"+new_services.model_name+"-"+new_services.model_version.replace('v','').replace('.','')
+                new_services.created_on = datetime.datetime.now()
+                new_services.changed_on = datetime.datetime.now()
+                db.session.add(new_services)
+                db.session.commit()
+        except InvalidRequestError:
+            db.session.rollback()
+        except Exception as e:
+            raise e
+        return redirect(request.referrer)
+
+
+
+class InferenceService_ModelView(InferenceService_ModelView_base,MyappModelView):
+    datamodel = SQLAInterface(InferenceService)
 
 
 appbuilder.add_view(InferenceService_ModelView,"推理服务",icon = 'fa-space-shuttle',category = '服务化')
 
+# 添加api
+class InferenceService_ModelView_Api(InferenceService_ModelView_base,MyappModelRestApi):
+    datamodel = SQLAInterface(InferenceService)
+    route_base = '/inferenceservice_modelview/api'
+    add_columns = ['service_type', 'project', 'label', 'model_name', 'model_version', 'images', 'model_path',
+                   'model_input', 'model_output', 'resource_memory', 'resource_cpu', 'resource_gpu', 'min_replicas',
+                   'max_replicas', 'hpa', 'canary', 'shadow', 'host', 'command', 'working_dir', 'env', 'ports',
+                   'metrics', 'health', 'expand','volume_mount']
+    edit_columns = add_columns
 
+appbuilder.add_api(InferenceService_ModelView_Api)

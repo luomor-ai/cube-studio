@@ -79,9 +79,10 @@ class Repository_ModelView_Base():
     add_form_extra_fields = {
         "password": StringField(
             _(datamodel.obj.lab('password')),
-            widget=BS3PasswordFieldWidget()  # 传给widget函数的是外层的field对象，以及widget函数的参数
+            widget=BS3TextFieldWidget()  # 传给widget函数的是外层的field对象，以及widget函数的参数
         )
     }
+
     edit_form_extra_fields = add_form_extra_fields
 
     # @pysnooper.snoop()
@@ -105,7 +106,7 @@ class Repository_ModelView_Base():
     def apply_hubsecret(self,hubsecret):
         from myapp.utils.py.py_k8s import K8s
         all_cluster=conf.get('CLUSTERS',{})
-        all_kubeconfig = [all_cluster[cluster]['KUBECONFIG'] for cluster in all_cluster]+['']
+        all_kubeconfig = [all_cluster[cluster].get('KUBECONFIG','') for cluster in all_cluster]+['']
         all_kubeconfig = list(set(all_kubeconfig))
         for kubeconfig in all_kubeconfig:
             k8s = K8s(kubeconfig)

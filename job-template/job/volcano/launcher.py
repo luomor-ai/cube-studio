@@ -63,11 +63,6 @@ print(GPU_TYPE,GPU_RESOURCE)
 
 
 def default_job_name():
-    # import re
-    # ctx = KFJobContext.get_context()
-    # p_name = str(ctx.pipeline_name) or ''
-    # p_name = re.sub(r'[^-a-z0-9]', '-', p_name)
-    # return "-".join([str(ctx.creator), p_name, "volcanojob", str(uuid.uuid1())])
     name = "volcanojob-" + KFJ_PIPELINE_NAME.replace('_','-')+"-"+uuid.uuid4().hex[:4]
     return name[0:54]
 
@@ -92,6 +87,7 @@ def run_shell(shell):
             print('shell finish %s'%status,flush=True)
             break
         if status==-9 or status==-15 or status==143:   # 外界触发kill
+        # if status!=0:  # 外界触发kill
             print('shell finish %s'%status,flush=True)
             break
 
@@ -319,7 +315,7 @@ def launch_volcanojob(name, num_workers, image,working_dir, worker_command):
         # 实时打印日志,由于stern跟踪时长有限制，所以会每个小时重启一次ster进程
         line='>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
         print('begin follow log\n%s %s'%(line,datetime.datetime.now()), flush=True)
-        command = "stern %s --namespace %s --kubeconfig /root/.kube/%s-kubeconfig --tail 10 --template '{{.PodName}} {{.Message}}'"%(name,KFJ_NAMESPACE,os.getenv("KFJ_ENVIRONMENT",'dev'))
+        command = '''stern %s --namespace %s --since 10s --template '{{.PodName}} {{.Message}} {{"\\n"}}' '''%(name,KFJ_NAMESPACE)
         print(command, flush=True)
         run_shell(command)
         print('%s %s\nend follow log'%(line,datetime.datetime.now()), flush=True)
@@ -345,12 +341,6 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
     print("{} args: {}".format(__file__, args))
-    # 模板使用时需要添加kubeconfig挂载到/root/.kube/下面
-    config_path='/root/.kube/%s-kubeconfig'%os.getenv("KFJ_ENVIRONMENT",'dev')
-    if not os.path.exists(config_path):
-        print(config_path+" not exits")
-        exit(1)
-
 
     launch_volcanojob(name=default_job_name(),num_workers=args.num_worker,image=args.image,working_dir=args.working_dir,worker_command=args.command)
 

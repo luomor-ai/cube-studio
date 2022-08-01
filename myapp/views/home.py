@@ -26,6 +26,7 @@ from myapp.views.base import BaseMyappView
 
 from flask_appbuilder import ModelView,AppBuilder,expose,BaseView,has_access
 from myapp import app, appbuilder
+from flask import stream_with_context, request
 
 resource_used = {
     "check_time": None,
@@ -59,7 +60,7 @@ class Myapp(BaseMyappView):
         from myapp.utils.py.py_k8s import K8s
         all_clusters = conf.get('CLUSTERS',{})
         if cluster_name in all_clusters:
-            kubeconfig = all_clusters[cluster_name]['KUBECONFIG']
+            kubeconfig = all_clusters[cluster_name].get('KUBECONFIG','')
             pod_url = all_clusters[cluster_name].get('K8S_DASHBOARD_CLUSTER') + "#/log/%s/%s/pod?namespace=%s&container=%s" % (namespace, pod_name, namespace, pod_name)
         else:
             kubeconfig = None
@@ -113,7 +114,7 @@ class Myapp(BaseMyappView):
             if ip in nodes:
                 clusters = conf.get('CLUSTERS', {})
                 cluster = clusters[cluster_name]
-                k8s_client = K8s(cluster['KUBECONFIG'])
+                k8s_client = K8s(cluster.get('KUBECONFIG',''))
                 # 获取最新的节点信息
                 nodes = k8s_client.get_node(ip=ip)
                 if nodes:
@@ -136,7 +137,7 @@ class Myapp(BaseMyappView):
                 clusters = conf.get('CLUSTERS', {})
                 for cluster_name in clusters:
                     cluster = clusters[cluster_name]
-                    k8s_client = K8s(cluster['KUBECONFIG'])
+                    k8s_client = K8s(cluster.get('KUBECONFIG',''))
 
                     all_node = k8s_client.get_node()
                     all_node_json = {}

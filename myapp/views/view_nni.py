@@ -240,7 +240,7 @@ class NNI_ModelView_Base():
     edit_form_extra_fields['parameters'] = StringField(
         _(datamodel.obj.lab('parameters')),
         default=datamodel.obj.parameters.default.arg,
-        description='搜索参数，注意：所有整型、浮点型都写成字符串型',
+        description=Markup(('搜索参数，注意：所有整型、浮点型都写成字符串型,示例：\n'+"<pre><code>%s</code></pre>"%core.nni_parameters_demo()).replace('\n','<br>')),
         widget=MyBS3TextAreaFieldWidget(rows=10),
         validators=[DataRequired()]
     )
@@ -466,7 +466,7 @@ class NNI_ModelView_Base():
                     image_secrets.append(hubsecret[0])
 
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(nni.project.cluster['KUBECONFIG'])
+        k8s_client = K8s(nni.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('KATIB_NAMESPACE')
         run_id='nni-'+nni.name
 
@@ -481,7 +481,7 @@ class NNI_ModelView_Base():
 
 
         volume_mount = nni.volume_mount+",/usr/share/zoneinfo/Asia/Shanghai(hostpath):/etc/localtime"
-        labels={"nni": nni.name, "username": nni.created_by.username,'run-id':run_id}
+        labels={"app": nni.name, "user": nni.created_by.username,'run-id':run_id,'pod-type':"nni"}
 
         k8s_client.create_debug_pod(
             namespace=namespace,
@@ -495,7 +495,7 @@ class NNI_ModelView_Base():
             resource_memory='2G',
             resource_cpu='2',
             resource_gpu='0',
-            image_pull_policy='Always',
+            image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
             image_pull_secrets=image_secrets,
             image=conf.get('NNI_IMAGES',json.loads(nni.job_json).get('job_worker_image')) ,
             hostAliases=conf.get('HOSTALIASES',''),
@@ -517,7 +517,8 @@ class NNI_ModelView_Base():
         host = nni.project.cluster.get('NNI_DOMAIN',request.host)
         if not host:
             host=request.host
-
+        if ':' in host:
+            host = host[:host.rindex(':')]   # 如果捕获到端口号，要去掉
         vs_json = {
             "apiVersion": "networking.istio.io/v1alpha3",
             "kind": "VirtualService",
@@ -724,7 +725,7 @@ frameworkcontrollerConfig:
                 image_secrets = image_secrets,
                 hostAliases=conf.get('HOSTALIASES', ''),
                 workingDir=item.working_dir,
-                image_pull_policy=item.image_pull_policy,
+                image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                 resource_memory=item.resource_memory,
                 resource_cpu=item.resource_cpu,
                 command=item.tf_worker_command
@@ -742,7 +743,7 @@ frameworkcontrollerConfig:
                 image_secrets=image_secrets,
                 hostAliases=conf.get('HOSTALIASES', ''),
                 workingDir=item.working_dir,
-                image_pull_policy=item.image_pull_policy,
+                image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                 resource_memory=item.resource_memory,
                 resource_cpu=item.resource_cpu,
                 command=item.job_worker_command
@@ -761,7 +762,7 @@ frameworkcontrollerConfig:
                 image_secrets=image_secrets,
                 hostAliases=conf.get('HOSTALIASES', ''),
                 workingDir=item.working_dir,
-                image_pull_policy=item.image_pull_policy,
+                image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                 resource_memory=item.resource_memory,
                 resource_cpu=item.resource_cpu,
                 master_command=item.pytorch_master_command,
@@ -788,7 +789,7 @@ frameworkcontrollerConfig:
     def log_task(self,nni_id):
         nni = db.session.query(NNI).filter_by(id=nni_id).first()
         from myapp.utils.py.py_k8s import K8s
-        k8s = K8s(nni.project.cluster['KUBECONFIG'])
+        k8s = K8s(nni.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('KATIB_NAMESPACE')
         pod = k8s.get_pods(namespace=namespace, pod_name=nni.name)
         if pod:

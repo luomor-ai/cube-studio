@@ -34,7 +34,6 @@ from .base import (
     api,
     BaseMyappView,
     check_ownership,
-    CsvResponse,
     data_payload_response,
     DeleteMixin,
     generate_download_headers,
@@ -168,6 +167,11 @@ class Project_ModelView_Base():
         self.add_form_extra_fields = self.edit_form_extra_fields
 
 
+    def pre_add(self, item):
+        if item.expand:
+            core.validate_json(item.expand)
+            item.expand = json.dumps(json.loads(item.expand),indent=4,ensure_ascii=False)
+
     def pre_update(self, item):
         if item.expand:
             core.validate_json(item.expand)
@@ -211,6 +215,9 @@ class Project_ModelView_job_template(Project_ModelView_Base,MyappModelView):
     project_type = 'job-template'
     base_filters = [["id", Project_Filter, project_type]]  # 设置权限过滤器
     datamodel = SQLAInterface(Project)
+    label_title = '模板分类'
+
+appbuilder.add_view(Project_ModelView_job_template,"模板分类",icon = 'fa-tasks',category = '项目组',category_icon = 'fa-users')
 
 
 # 添加api
@@ -227,6 +234,9 @@ class Project_ModelView_org(Project_ModelView_Base,MyappModelView):
     project_type='org'
     base_filters = [["id", Project_Filter, project_type]]  # 设置权限过滤器
     datamodel = SQLAInterface(Project)
+    label_title = '项目分组'
+
+appbuilder.add_view(Project_ModelView_org,"项目分组",icon = 'fa-sitemap',category = '项目组',category_icon = 'fa-users')
 
 # 添加api
 class Project_ModelView_org_Api(Project_ModelView_Base,MyappModelRestApi):
@@ -243,6 +253,9 @@ class Project_ModelView_train_model(Project_ModelView_Base,MyappModelView):
     project_type = 'model'
     base_filters = [["id", Project_Filter, project_type]]  # 设置权限过滤器
     datamodel = SQLAInterface(Project)
+    label_title = '模型分组'
+
+appbuilder.add_view(Project_ModelView_train_model,"模型分组",icon = 'fa-address-book-o',category = '项目组',category_icon = 'fa-users')
 
 
 # 添加api
@@ -256,9 +269,6 @@ appbuilder.add_api(Project_ModelView_train_model_Api)
 
 
 # 添加视图和菜单
-appbuilder.add_view(Project_ModelView_job_template,"模板分类",icon = 'fa-tasks',category = '项目组',category_icon = 'fa-users')
-appbuilder.add_view(Project_ModelView_org,"项目分组",icon = 'fa-sitemap',category = '项目组',category_icon = 'fa-users')
-appbuilder.add_view(Project_ModelView_train_model,"模型分组",icon = 'fa-address-book-o',category = '项目组',category_icon = 'fa-users')
 
 
 # 添加api

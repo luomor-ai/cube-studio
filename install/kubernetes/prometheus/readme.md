@@ -12,7 +12,9 @@ kubectl create ns monitoring
 
 # 部署operator
 ```
-kubectl apply -f ./operator/bundle.yaml
+kubectl apply -f ./operator/operator-rbac.yml
+kubectl apply -f ./operator/operator-dp.yml
+kubectl apply -f ./operator/operator-crd.yml
 ```
 
 
@@ -65,6 +67,7 @@ kubectl apply -f ./prometheus/prometheus-svc.yml
 
 # prometheus-operator  部署成功后才能创建成功  
 ```bash
+kubectl apply -f ./prometheus/pv-pvc-hostpath.yaml
 kubectl apply -f ./prometheus/prometheus-main.yml
 ```
 

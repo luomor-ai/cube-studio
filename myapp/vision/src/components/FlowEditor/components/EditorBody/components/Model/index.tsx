@@ -352,8 +352,8 @@ const Model: React.FC<ModelProps> = props => {
                           ></div>
                         );
                       }}
-                      multiline={args.type === 'json'}
-                      autoAdjustHeight={args.type === 'json'}
+                      multiline={args.type !== 'str'}
+                      autoAdjustHeight={args.type !== 'str'}
                       onChange={(event: FormEvent, value?: string) => {
                         handleOnChange(key, value ? value : '', args.type);
                       }}

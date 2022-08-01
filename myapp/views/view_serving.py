@@ -65,7 +65,7 @@ from sqlalchemy import and_, or_, select
 from .baseApi import (
     MyappModelRestApi
 )
-
+from myapp.views.view_team import Project_Filter,Project_Join_Filter,filter_join_org_project
 from flask_appbuilder import CompactCRUDMixin, expose
 import pysnooper,datetime,time,json
 conf = app.config
@@ -84,30 +84,27 @@ class Service_Filter(MyappFilter):
         return query.filter(self.model.project_id.in_(join_projects_id))
 
 
-class Service_ModelView(MyappModelView):
+class Service_ModelView_base():
     datamodel = SQLAInterface(Service)
     help_url = conf.get('HELP_URL', {}).get(datamodel.obj.__tablename__, '') if datamodel else ''
-    show_columns = ['name', 'label','images','volume_mount','working_dir','command','env','resource_memory','resource_cpu','resource_gpu','replicas','ports','host_url','link']
+    show_columns = ['name', 'label','images','volume_mount','working_dir','command','env','resource_memory','resource_cpu','resource_gpu','replicas','ports','host_url']
     add_columns = ['project','name', 'label','images','working_dir','command','env','resource_memory','resource_cpu','resource_gpu','replicas','ports','host']
-    list_columns = ['project','name_url','host_url','polaris_url','deploy','monitoring_url','creator','modified','clear']
+    list_columns = ['project','name_url','host_url','ip','creator','modified','deploy']
     edit_columns = ['project','name', 'label','images','working_dir','command','env','resource_memory','resource_cpu','resource_gpu','replicas','ports','volume_mount','host',]
     base_order = ('id','desc')
     order_columns = ['id']
     label_title = '云原生服务'
     base_filters = [["id", Service_Filter, lambda: []]]  # 设置权限过滤器
-
+    add_form_query_rel_fields = {
+        "project": [["name", Project_Join_Filter, 'org']]
+    }
+    edit_form_query_rel_fields = add_form_query_rel_fields
 
     add_form_extra_fields={
-        "project": QuerySelectField(
-            _(datamodel.obj.lab('project')),
-            query_factory=filter_join_org_project,
-            allow_blank=True,
-            widget=Select2Widget()
-        ),
         "name":StringField(_(datamodel.obj.lab('name')), description='英文名(字母、数字、- 组成)，最长50个字符',widget=BS3TextFieldWidget(), validators=[DataRequired(),Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"),Length(1,54)]),
         "label":StringField(_(datamodel.obj.lab('label')), description='中文名', widget=BS3TextFieldWidget(),validators=[DataRequired()]),
         "images": StringField(_(datamodel.obj.lab('images')), description='镜像全称', widget=BS3TextFieldWidget(), validators=[DataRequired()]),
-        "volume_mount":StringField(_(datamodel.obj.lab('volume_mount')),description='外部挂载，格式:$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,注意pvc会自动挂载对应目录下的个人rtx子目录',widget=BS3TextFieldWidget(),default=''),
+        "volume_mount":StringField(_(datamodel.obj.lab('volume_mount')),description='外部挂载，格式:$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,4G(memory):/dev/shm,注意pvc会自动挂载对应目录下的个人rtx子目录',widget=BS3TextFieldWidget(),default=''),
         "working_dir": StringField(_(datamodel.obj.lab('working_dir')),description='工作目录，容器启动的初始所在目录，不填默认使用Dockerfile内定义的工作目录',widget=BS3TextFieldWidget()),
         "command":StringField(_(datamodel.obj.lab('command')), description='启动命令，支持多行命令',widget=MyBS3TextAreaFieldWidget(rows=3)),
         "node_selector":StringField(_(datamodel.obj.lab('node_selector')), description='运行当前服务所在的机器',widget=BS3TextFieldWidget(),default='cpu=true,serving=true'),
@@ -122,15 +119,11 @@ class Service_ModelView(MyappModelView):
     }
 
     gpu_type = conf.get('GPU_TYPE')
-    if gpu_type == 'TENCENT':
-        add_form_extra_fields['resource_gpu'] = StringField(_(datamodel.obj.lab('resource_gpu')),
-                                                                  default='0,0',
-                                                                  description='gpu的资源使用限制(core,memory)，示例:10,2（10%的单卡核数和2*256M的显存），其中core为小于100的整数或100的整数倍，表示占用的单卡的百分比例，memory为整数，表示n*256M的显存',
-                                                                  widget=BS3TextFieldWidget())
-    if gpu_type == 'NVIDIA':
-        add_form_extra_fields['resource_gpu'] = StringField(_(datamodel.obj.lab('resource_gpu')), default=0,
-                                                                  description='gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡',
-                                                                  widget=BS3TextFieldWidget())
+
+
+    add_form_extra_fields['resource_gpu'] = StringField(_(datamodel.obj.lab('resource_gpu')), default='0',
+                                                              description='gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡',
+                                                              widget=BS3TextFieldWidget())
 
     edit_form_extra_fields = add_form_extra_fields
     # edit_form_extra_fields['name']=StringField(_(datamodel.obj.lab('name')), description='英文名(字母、数字、- 组成)，最长50个字符',widget=MyBS3TextFieldWidget(readonly=True), validators=[Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"),Length(1,54)]),
@@ -143,7 +136,7 @@ class Service_ModelView(MyappModelView):
     def delete_old_service(self,service_name,cluster):
         service_external_name = (service_name + "-external").lower()[:60].strip('-')
         from myapp.utils.py.py_k8s import K8s
-        k8s = K8s(cluster['KUBECONFIG'])
+        k8s = K8s(cluster.get('KUBECONFIG',''))
         namespace = conf.get('SERVICE_NAMESPACE')
         k8s.delete_deployment(namespace=namespace, name=service_name)
         k8s.delete_service(namespace=namespace, name=service_name)
@@ -179,15 +172,15 @@ class Service_ModelView(MyappModelView):
 
         service = db.session.query(Service).filter_by(id=service_id).first()
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(service.project.cluster['KUBECONFIG'])
+        k8s_client = K8s(service.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('SERVICE_NAMESPACE')
 
         volume_mount = service.volume_mount
-
+        labels = {"app":service.name,"user":service.created_by.username,"pod-type":"service"}
         k8s_client.create_deployment(namespace=namespace,
                               name=service.name,
                               replicas=service.replicas,
-                              labels={"app":service.name,"username":service.created_by.username},
+                              labels=labels,
                               command=['bash','-c',service.command] if service.command else None,
                               args=None,
                               volume_mount=volume_mount,
@@ -196,7 +189,7 @@ class Service_ModelView(MyappModelView):
                               resource_memory=service.resource_memory,
                               resource_cpu=service.resource_cpu,
                               resource_gpu=service.resource_gpu if service.resource_gpu else '',
-                              image_pull_policy='Always',
+                              image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                               image_pull_secrets=image_secrets,
                               image=service.images,
                               hostAliases=conf.get('HOSTALIASES',''),
@@ -214,7 +207,8 @@ class Service_ModelView(MyappModelView):
             namespace=namespace,
             name=service.name,
             username=service.created_by.username,
-            ports=ports
+            ports=ports,
+            selector=labels
         )
         # 如果域名配置的gateway，就用这个
         host = service.name+"."+conf.get('SERVICE_DOMAIN')
@@ -231,7 +225,26 @@ class Service_ModelView(MyappModelView):
                            )
 
         # 以ip形式访问的话，使用的代理ip。不然不好处理机器服务化机器扩容和缩容时ip变化
-        SERVICE_EXTERNAL_IP = conf.get('SERVICE_EXTERNAL_IP',None)
+        # 创建EXTERNAL_IP的服务
+
+        SERVICE_EXTERNAL_IP=[]
+        # 使用项目组ip
+        if service.project.expand:
+            ip = json.loads(service.project.expand).get('SERVICE_EXTERNAL_IP', '')
+            if ip and type(SERVICE_EXTERNAL_IP)==str:
+                SERVICE_EXTERNAL_IP = [ip]
+
+        # 使用全局ip
+        if not SERVICE_EXTERNAL_IP:
+            SERVICE_EXTERNAL_IP = conf.get('SERVICE_EXTERNAL_IP', None)
+
+        # 使用当前ip
+        if not SERVICE_EXTERNAL_IP:
+            ip = request.host[:request.host.rindex(':')] if ':' in request.host else request.host  # 如果捕获到端口号，要去掉
+            if core.checkip(ip):
+                SERVICE_EXTERNAL_IP=[ip]
+
+
         if SERVICE_EXTERNAL_IP:
             service_ports = [[30000+10*service.id+index,port] for index,port in enumerate(ports)]
             service_external_name = (service.name + "-external").lower()[:60].strip('-')
@@ -240,8 +253,8 @@ class Service_ModelView(MyappModelView):
                 name=service_external_name,
                 username=service.created_by.username,
                 ports=service_ports,
-                selector={"app": service.name, 'user': service.created_by.username},
-                externalIPs=conf.get('SERVICE_EXTERNAL_IP',None)
+                selector=labels,
+                external_ip=SERVICE_EXTERNAL_IP
             )
 
 
@@ -306,23 +319,13 @@ class Service_ModelView(MyappModelView):
 
 
 
-    @expose('/link/<service_id>')
-    def link(self, service_id):
-        service = db.session.query(Service).filter_by(id=service_id).first()
-        url = "http://" + service.name + "." + conf.get('SERVICE_DOMAIN')
-        if service.host:
-            if 'http://' in service.host or 'https://' in service.host:
-                url = service.host
-            else:
-                url = "http://"+service.host
-        data={
-            "url":url   # 'http://127.0.0.1:8080/video_sample/' #
-        }
-
-        # 返回模板
-        return self.render_template('link.html', data=data)
-
-
+class Service_ModelView(Service_ModelView_base,MyappModelView,DeleteMixin):
+    datamodel = SQLAInterface(Service)
 appbuilder.add_view(Service_ModelView,"内部服务",icon = 'fa-internet-explorer',category = '服务化')
 
 
+class Service_ModelView_Api(Service_ModelView_base,MyappModelRestApi):
+    datamodel = SQLAInterface(Service)
+    route_base = '/service_modelview/api'
+
+appbuilder.add_api(Service_ModelView_Api)

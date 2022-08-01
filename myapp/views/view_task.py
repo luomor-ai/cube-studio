@@ -126,7 +126,7 @@ class Task_ModelView_Base():
         ),
         "volume_mount":StringField(
             label = _(datamodel.obj.lab('volume_mount')),
-            description='外部挂载，格式:$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,注意pvc会自动挂载对应目录下的个人rtx子目录',
+            description='外部挂载，格式:$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,4G(memory):/dev/shm,注意pvc会自动挂载对应目录下的个人rtx子目录',
             widget=BS3TextFieldWidget(),
             default='kubeflow-user-workspace(pvc):/mnt,kubeflow-archives(pvc):/archives'
         ),
@@ -184,7 +184,7 @@ class Task_ModelView_Base():
 
     }
 
-    add_form_extra_fields['resource_gpu'] = StringField(_(datamodel.obj.lab('resource_gpu')), default=0,
+    add_form_extra_fields['resource_gpu'] = StringField(_(datamodel.obj.lab('resource_gpu')), default='0',
                                                                   description='gpu的资源使用限制(单位卡)，示例:1，2，训练任务每个容器独占整卡。申请具体的卡型号，可以类似 1(V100),目前支持T4/V100/A100/VGPU',
                                                                   widget=BS3TextFieldWidget())
 
@@ -310,6 +310,8 @@ class Task_ModelView_Base():
     # @pysnooper.snoop(watch_explode=('item'))
     def pre_update(self, item):
         item.name = item.name.replace('_', '-')[0:54].lower()
+        if item.resource_gpu:
+            item.resource_gpu=str(item.resource_gpu).upper()
         if item.job_template is None:
             raise MyappException("Job Template 为必选")
         # if item.job_template.volume_mount and item.job_template.volume_mount not in item.volume_mount:
@@ -424,6 +426,7 @@ class Task_ModelView_Base():
         task_env += 'KFJ_TASK_RESOURCE_CPU=' + str(task.resource_cpu) + "\n"
         task_env += 'KFJ_TASK_RESOURCE_MEMORY=' + str(task.resource_memory) + "\n"
         task_env += 'KFJ_TASK_RESOURCE_GPU=' + str(task.resource_gpu.replace('+', '')) + "\n"
+        task_env += 'KFJ_TASK_PROJECT_NAME=' + str(task.pipeline.project.name) + "\n"
         task_env += 'KFJ_PIPELINE_ID=' + str(task.pipeline_id) + "\n"
         task_env += 'KFJ_RUN_ID=' + run_id + "\n"
         task_env += 'KFJ_CREATOR=' + str(task.pipeline.created_by.username) + "\n"
@@ -467,14 +470,14 @@ class Task_ModelView_Base():
             hostAliases+="\n"+task.job_template.hostAliases
         k8s_client.create_debug_pod(namespace,
                              name=pod_name,
-                             labels={"pipeline": task.pipeline.name, 'task': task.name, 'run-rtx': g.user.username,'run-id': run_id},
+                             labels={"pipeline": task.pipeline.name, 'task': task.name, 'user': g.user.username,'run-id': run_id,'pod-type':"task"},
                              command=command,
                              args=args,
                              volume_mount=volume_mount,
                              working_dir=working_dir,
                              node_selector=task.get_node_selector(), resource_memory=resource_memory,
                              resource_cpu=resource_cpu, resource_gpu=resource_gpu,
-                             image_pull_policy=task.pipeline.image_pull_policy,
+                             image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
                              image_pull_secrets=[task.job_template.images.repository.hubsecret],
                              image=image,
                              hostAliases=hostAliases,
@@ -493,7 +496,7 @@ class Task_ModelView_Base():
 
 
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(task.pipeline.project.cluster['KUBECONFIG'])
+        k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('PIPELINE_NAMESPACE')
         pod_name="debug-"+task.pipeline.name.replace('_','-')+"-"+task.name.replace('_','-')
         pod_name=pod_name.lower()[:60].strip('-')
@@ -548,7 +551,7 @@ class Task_ModelView_Base():
     def run_task(self,task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(task.pipeline.project.cluster['KUBECONFIG'])
+        k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('PIPELINE_NAMESPACE')
         pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = pod_name.lower()[:60].strip('-')
@@ -643,7 +646,7 @@ class Task_ModelView_Base():
     def clear_task(self,task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
         from myapp.utils.py.py_k8s import K8s
-        k8s_client = K8s(task.pipeline.project.cluster['KUBECONFIG'])
+        k8s_client = K8s(task.pipeline.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('PIPELINE_NAMESPACE')
 
         # 删除运行时容器
@@ -687,7 +690,7 @@ class Task_ModelView_Base():
     def log_task(self,task_id):
         task = db.session.query(Task).filter_by(id=task_id).first()
         from myapp.utils.py.py_k8s import K8s
-        k8s = K8s(task.pipeline.project.cluster['KUBECONFIG'])
+        k8s = K8s(task.pipeline.project.cluster.get('KUBECONFIG',''))
         namespace = conf.get('PIPELINE_NAMESPACE')
         running_pod_name = "run-" + task.pipeline.name.replace('_', '-') + "-" + task.name.replace('_', '-')
         pod_name = running_pod_name.lower()[:60].strip('-')
