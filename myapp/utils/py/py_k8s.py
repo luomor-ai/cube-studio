@@ -1,7 +1,4 @@
 import time,datetime,logging,os,sys
-
-dir_common = os.path.split(os.path.realpath(__file__))[0] + '/../'
-sys.path.append(dir_common)   # 将根目录添加到系统目录,才能正常引用common文件夹
 import re
 from kubernetes import client,config,watch
 from kubernetes.client.models import v1_pod,v1_object_meta,v1_pod_spec,v1_deployment,v1_deployment_spec
@@ -19,7 +16,6 @@ from kubernetes import config
 from kubernetes.client.rest import ApiException
 
 
-# K8s操作类型
 class K8s():
 
     def __init__(self,file_path=None):  # kubeconfig
@@ -29,7 +25,7 @@ class K8s():
         elif kubeconfig:
             config.kube_config.load_kube_config(config_file=kubeconfig)
         else:
-            config.load_incluster_config()   # 使用为pod配置的rbac访问集群
+            config.load_incluster_config()
         self.v1 = client.CoreV1Api()
         self.v1beta1 = client.ExtensionsV1beta1Api()
         self.AppsV1Api = client.AppsV1Api()
@@ -488,7 +484,26 @@ class K8s():
             except Exception as e:
                 print(e)
 
+            # 删除paddlejob
+            try:
+                crd_info = all_crd_info['paddlejob']
+                crd_names = self.delete_crd(
+                    group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],
+                    namespace=namespace, labels={'run-id': run_id}
+                )
+            except Exception as e:
+                print(e)
 
+
+            # 删除mxjob
+            try:
+                crd_info = all_crd_info['mxjob']
+                crd_names = self.delete_crd(
+                    group=crd_info['group'], version=crd_info['version'], plural=crd_info['plural'],
+                    namespace=namespace, labels={'run-id': run_id}
+                )
+            except Exception as e:
+                print(e)
 
             # 删除deployment
             try:
@@ -578,7 +593,8 @@ class K8s():
 
 
     # @pysnooper.snoop()
-    def get_volume_mounts(self,volume_mount,username):
+    @staticmethod
+    def get_volume_mounts(volume_mount,username):
         k8s_volumes = []
         k8s_volume_mounts = []
         if volume_mount and ":" in volume_mount:
@@ -669,6 +685,21 @@ class K8s():
                     {
                         "name": 'tz-config',
                         "mountPath": '/etc/localtime'
+                    }
+                )
+            if '/dev/shm' not in volume_mount:
+                k8s_volume_mounts.append(
+                    {
+                        "name": 'dshm',
+                        "mountPath": "/dev/shm"
+                    }
+                )
+                k8s_volumes.append(
+                    {
+                        "name": "dshm",
+                        "emptyDir": {
+                            "medium": "Memory"
+                        }
                     }
                 )
         return k8s_volumes,k8s_volume_mounts
@@ -802,12 +833,10 @@ class K8s():
 
 
     # @pysnooper.snoop()
-    def make_pod(self,namespace,name,labels,command,args,volume_mount,working_dir,node_selector,resource_memory,resource_cpu,resource_gpu,image_pull_policy,image_pull_secrets,image,hostAliases,env,privileged,accounts,username,ports=None,restart_policy='OnFailure',scheduler_name='default-scheduler',node_name='',health=None):
-        annotations = None
+    def make_pod(self,namespace,name,labels,command,args,volume_mount,working_dir,node_selector,resource_memory,resource_cpu,resource_gpu,image_pull_policy,image_pull_secrets,image,hostAliases,env,privileged,accounts,username,ports=None,restart_policy='OnFailure',scheduler_name='default-scheduler',node_name='',health=None,annotations={}):
+
         if scheduler_name == 'kube-batch':
-            annotations = {
-                'scheduling.k8s.io/group-name': name
-            }
+            annotations['scheduling.k8s.io/group-name']=name
         metadata = v1_object_meta.V1ObjectMeta(name=name, namespace=namespace, labels=labels, annotations=annotations)
         image_pull_secrets = [client.V1LocalObjectReference(image_pull_secret) for image_pull_secret in image_pull_secrets]
         nodeSelector = None
@@ -973,11 +1002,13 @@ class K8s():
                 print(e)
 
     # @pysnooper.snoop(watch_explode=())
-    def create_deployment(self,namespace,name,replicas,labels,command,args,volume_mount,working_dir,node_selector,resource_memory,resource_cpu,resource_gpu,image_pull_policy,image_pull_secrets,image,hostAliases,env,privileged,accounts,username,ports,scheduler_name='default-scheduler',health=None):
+    def create_deployment(self,namespace,name,replicas,labels,command,args,volume_mount,working_dir,node_selector,resource_memory,resource_cpu,resource_gpu,image_pull_policy,image_pull_secrets,image,hostAliases,env,privileged,accounts,username,ports,scheduler_name='default-scheduler',health=None,annotations={}):
+
         pod,pod_spec = self.make_pod(
             namespace=namespace,
             name=name,
             labels=labels,
+            annotations=annotations,
             command=command,
             args=args,
             volume_mount=volume_mount,
@@ -1070,7 +1101,7 @@ class K8s():
                 print(e)
 
     # @pysnooper.snoop(watch_explode=())
-    def create_statefulset(self,namespace,name,replicas,labels,command,args,volume_mount,working_dir,node_selector,resource_memory,resource_cpu,resource_gpu,image_pull_policy,image_pull_secrets,image,hostAliases,env,privileged,accounts,username,ports,restart_policy='Always',scheduler_name='default-scheduler'):
+    def create_statefulset(self,namespace,name,replicas,labels,command,args,volume_mount,working_dir,node_selector,resource_memory,resource_cpu,resource_gpu,image_pull_policy,image_pull_secrets,image,hostAliases,env,privileged,accounts,username,ports,restart_policy='Always',scheduler_name='default-scheduler',annotations={}):
 
         pod,pod_spec = self.make_pod(
             namespace=namespace,
@@ -1096,11 +1127,9 @@ class K8s():
             restart_policy=restart_policy,
             scheduler_name=scheduler_name
         )
-        annotations = None
+
         if scheduler_name == 'kube-batch':
-            annotations = {
-                'scheduling.k8s.io/group-name': name
-            }
+            annotations['scheduling.k8s.io/group-name'] = name
         sts_metadata = v1_object_meta.V1ObjectMeta(name=name, namespace=namespace, labels=labels)
         selector = client.models.V1LabelSelector(match_labels=labels)
         template_metadata = v1_object_meta.V1ObjectMeta(labels=labels,annotations=annotations)
@@ -1535,14 +1564,17 @@ class K8s():
         items=metrics.get('items',[])
         # print(items)
         for item in items:
-            back_metrics.append({
-                "name":item['metadata']['name'],
-                "time":item['timestamp'],
-                "namespace":item['metadata']['namespace'],
-                "cpu": sum(int(container['usage']['cpu'].replace('n',''))/1000000 for container in item['containers']),
-                "memory": sum(self.to_memory_GB(container['usage']['memory']) for container in item['containers']),
-                "window": item['window']
-            })
+            try:
+                back_metrics.append({
+                    "name":item['metadata']['name'],
+                    "time":item['timestamp'],
+                    "namespace":item['metadata']['namespace'],
+                    "cpu": sum(int(container['usage']['cpu'].replace('n',''))/1000000 for container in item['containers']),
+                    "memory": sum(self.to_memory_GB(container['usage']['memory']) for container in item['containers']),
+                    "window": item['window']
+                })
+            except Exception as e:
+                print(e)
         # print(back_metrics)
         return back_metrics
 

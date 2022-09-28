@@ -1,16 +1,11 @@
 
-mkdir -p ~/.kube/ kubeconfig /data/k8s/kubeflow/pipeline/workspace /data/k8s/kubeflow/pipeline/archives /data/k8s/infra/mysql
-cp config ~/.kube/config
-echo "" > kubeconfig/dev-kubeconfig
-
-curl -LO https://dl.k8s.io/release/v1.24.0/bin/linux/amd64/kubectl && chmod +x kubectl  && mv kubectl /usr/bin/
+bash init_node.sh
+mkdir -p ~/.kube && cp config ~/.kube/config && cp ~/.kube/config /etc/kubernetes/admin.conf
+mkdir -p kubeconfig && echo "" > kubeconfig/dev-kubeconfig
+curl -LO https://dl.k8s.io/release/v1.24.0/bin/linux/amd64/kubectl && chmod +x kubectl  && cp kubectl /usr/bin/ && mv kubectl /usr/local/bin/
 node=`kubectl  get node -o wide |grep $1 |awk '{print $1}'| head -n 1`
-kubectl label node $node train=true cpu=true notebook=true service=true org=public istio=true knative=true kubeflow=true kubeflow-dashboard=true mysql=true redis=true monitoring=true logging=true --overwrite
-# 拉取镜像
-sh pull_image_kubeflow.sh
+kubectl label node $node train=true cpu=true notebook=true service=true org=public istio=true kubeflow=true kubeflow-dashboard=true mysql=true redis=true monitoring=true logging=true --overwrite
 
-#wget https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.1/kustomize_v4.5.1_linux_amd64.tar.gz && tar -zxvf kustomize_v4.5.1_linux_amd64.tar.gz && chmod +x kustomize && mv kustomize /usr/bin/
-#wget https://pengluan-76009.sz.gfp.tencent-cloud.com/github/kustomize_v4.5.1_linux_amd64.tar.gz && tar -zxvf kustomize_v4.5.1_linux_amd64.tar.gz && chmod +x kustomize && mv kustomize /usr/bin/
 # 创建命名空间
 sh create_ns_secret.sh
 # 部署dashboard
@@ -27,13 +22,12 @@ kubectl create -f redis/service.yaml
 # 如果自己需要使用pv来保存redis队列数据，可以修改master.yaml
 kubectl create -f redis/master.yaml
 # 部署kube-batch
-kubectl create -f kube-batch/deploy.yaml
+#kubectl create -f kube-batch/deploy.yaml
 
 # 部署prometheus
 cd prometheus
-mkdir -p /data/k8s/monitoring/grafana/ /data/k8s/monitoring/prometheus/
-chmod -R 777 /data/k8s/monitoring/grafana/ /data/k8s/monitoring/prometheus/
 kubectl delete -f ./operator/operator-crd.yml
+sleep 5
 kubectl apply -f ./operator/operator-crd.yml
 kubectl apply -f ./operator/operator-rbac.yml
 kubectl wait crd/podmonitors.monitoring.coreos.com --for condition=established --timeout=60s
@@ -60,6 +54,7 @@ kubectl delete configmap grafana-config all-grafana-dashboards --namespace=monit
 kubectl create configmap grafana-config --from-file=./grafana/grafana.ini --namespace=monitoring
 kubectl create configmap all-grafana-dashboards --from-file=./grafana/dashboard --namespace=monitoring
 kubectl delete -f ./grafana/grafana-dp.yml
+sleep 5
 kubectl apply -f ./grafana/grafana-dp.yml
 kubectl apply -f ./service-discovery/kube-controller-manager-svc.yml
 kubectl apply -f ./service-discovery/kube-scheduler-svc.yml
@@ -69,6 +64,7 @@ kubectl apply -f ./prometheus/prometheus-rbac.yml
 kubectl apply -f ./prometheus/prometheus-svc.yml
 kubectl wait crd/prometheuses.monitoring.coreos.com --for condition=established --timeout=60s
 kubectl delete -f ./prometheus/prometheus-main.yml
+sleep 5
 kubectl apply -f ./prometheus/pv-pvc-hostpath.yaml
 kubectl apply -f ./prometheus/prometheus-main.yml
 kubectl apply -f ./servicemonitor/alertmanager-sm.yml
@@ -96,6 +92,7 @@ kubectl apply -f gpu/dcgm-exporter-sm.yaml
 kubectl create serviceaccount frameworkcontroller --namespace kubeflow
 kubectl create clusterrolebinding frameworkcontroller-kubeflow --clusterrole=cluster-admin --user=system:serviceaccount:kubeflow:frameworkcontroller
 kubectl create -f frameworkcontroller/frameworkcontroller-with-default-config.yaml
+sleep 5
 kubectl wait crd/frameworks.frameworkcontroller.microsoft.com --for condition=established --timeout=60s
 
 kubectl create serviceaccount frameworkbarrier --namespace pipeline
@@ -108,7 +105,7 @@ kubectl create clusterrolebinding frameworkbarrier-kubeflow --clusterrole=framew
 
 # 部署volcano
 kubectl delete -f volcano/volcano-development.yaml
-kubectl delete  secret volcano-admission-secret -n volcano-system
+kubectl delete secret volcano-admission-secret -n kubeflow
 kubectl apply -f volcano/volcano-development.yaml
 kubectl wait crd/jobs.batch.volcano.sh --for condition=established --timeout=60s
 
@@ -116,6 +113,9 @@ kubectl wait crd/jobs.batch.volcano.sh --for condition=established --timeout=60s
 kubectl apply -f istio/install-crd.yaml
 kubectl wait crd/envoyfilters.networking.istio.io --for condition=established --timeout=60s
 kubectl apply -f istio/install.yaml
+# k8s 1.21+
+# kubectl delete -f istio/install.yaml
+# kubectl apply -f istio/install-1.15.0.yaml
 
 # 部署kfp pipeline
 kubectl apply -f kubeflow/sa-rbac.yaml
@@ -124,6 +124,7 @@ kubectl apply -f kubeflow/pipeline/minio-artifact-secret.yaml
 kubectl apply -f kubeflow/pipeline/pipeline-runner-rolebinding.yaml
 
 cd kubeflow/pipeline/1.6.0/kustomize/
+
 #kustomize build cluster-scoped-resources/ | kubectl apply -f -
 kubectl apply -k cluster-scoped-resources
 kubectl wait crd/applications.app.k8s.io --for condition=established --timeout=60s
@@ -135,7 +136,9 @@ cd ../../../../
 kubectl apply -k kubeflow/train-operator/manifests/overlays/standalone
 # 部署sparkjob
 kubectl apply -f spark/install.yaml
-
+# 部署paddlejob
+kubectl apply -f paddle/crd.yaml
+kubectl apply -f paddle/operator.yaml
 
 # 部署管理平台
 kubectl delete configmap kubernetes-config -n infra

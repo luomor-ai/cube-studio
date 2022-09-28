@@ -5,7 +5,6 @@ from flask_appbuilder import ModelView,AppBuilder,expose,BaseView,has_access
 from importlib import reload
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
-# 将model添加成视图，并控制在前端的显示
 import uuid
 from myapp.models.model_nni import NNI
 from myapp.models.model_job import Repository
@@ -91,18 +90,16 @@ class NNI_Filter(MyappFilter):
         ).order_by(self.model.id.desc())
 
 
-
-# 定义数据库视图
 class NNI_ModelView_Base():
     datamodel = SQLAInterface(NNI)
     conv = GeneralModelConverter(datamodel)
     label_title='nni超参搜索'
-    check_redirect_list_url = '/nni_modelview/list/'
-    help_url = conf.get('HELP_URL', {}).get(datamodel.obj.__tablename__, '') if datamodel else ''
+    check_redirect_list_url = conf.get('MODEL_URLS',{}).get('nni','')
 
-    base_permissions = ['can_add', 'can_edit', 'can_delete', 'can_list', 'can_show']  # 默认为这些
+
+    base_permissions = ['can_add', 'can_edit', 'can_delete', 'can_list', 'can_show']
     base_order = ('id', 'desc')
-    base_filters = [["id", NNI_Filter, lambda: []]]  # 设置权限过滤器
+    base_filters = [["id", NNI_Filter, lambda: []]]
     order_columns = ['id']
     list_columns = ['project','describe_url','job_type','creator','modified','run','log']
     show_columns = ['created_by','changed_by','created_on','changed_on','job_type','name','namespace','describe',
@@ -129,7 +126,7 @@ class NNI_ModelView_Base():
 
     edit_form_extra_fields['name'] = StringField(
         _(datamodel.obj.lab('name')),
-        description='英文名(字母、数字、- 组成)，最长50个字符',
+        description='英文名(小写字母、数字、- 组成)，最长50个字符',
         widget=BS3TextFieldWidget(),
         validators=[DataRequired(), Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"), Length(1, 54)]
     )
@@ -282,55 +279,34 @@ class NNI_ModelView_Base():
         validators=[DataRequired()]
     )
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def set_column(self, nni=None):
         # 对编辑进行处理
-        request_data = request.args.to_dict()
-        job_type = request_data.get('job_type', '')
-        if nni:
-            job_type = nni.job_type
+        # request_data = request.args.to_dict()
+        # job_type = request_data.get('job_type', 'Job')
+        # if nni:
+        #     job_type = nni.job_type
+        #
+        # job_type_choices = ['','Job']
+        # job_type_choices = [[job_type_choice,job_type_choice] for job_type_choice in job_type_choices]
+        #
+        # if nni:
+        #     self.edit_form_extra_fields['job_type'] = SelectField(
+        #         _(self.datamodel.obj.lab('job_type')),
+        #         description="超参搜索的任务类型",
+        #         choices=job_type_choices,
+        #         widget=MySelect2Widget(extra_classes="readonly",value=job_type),
+        #         validators=[DataRequired()]
+        #     )
+        # else:
+        #     self.edit_form_extra_fields['job_type'] = SelectField(
+        #         _(self.datamodel.obj.lab('job_type')),
+        #         description="超参搜索的任务类型",
+        #         widget=MySelect2Widget(new_web=True,value=job_type),
+        #         choices=job_type_choices,
+        #         validators=[DataRequired()]
+        #     )
 
-        job_type_choices = ['','Job']
-        job_type_choices = [[job_type_choice,job_type_choice] for job_type_choice in job_type_choices]
-
-        if nni:
-            self.edit_form_extra_fields['job_type'] = SelectField(
-                _(self.datamodel.obj.lab('job_type')),
-                description="超参搜索的任务类型",
-                choices=job_type_choices,
-                widget=MySelect2Widget(extra_classes="readonly",value=job_type),
-                validators=[DataRequired()]
-            )
-        else:
-            self.edit_form_extra_fields['job_type'] = SelectField(
-                _(self.datamodel.obj.lab('job_type')),
-                description="超参搜索的任务类型",
-                widget=MySelect2Widget(new_web=True,value=job_type),
-                choices=job_type_choices,
-                validators=[DataRequired()]
-            )
-
-        self.edit_form_extra_fields['tf_worker_num'] = IntegerField(
-            _(self.datamodel.obj.lab('tf_worker_num')),
-            default=json.loads(nni.job_json).get('tf_worker_num',3) if nni and nni.job_json else 3,
-            description='工作节点数目',
-            widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
-        )
-        self.edit_form_extra_fields['tf_worker_image'] = StringField(
-            _(self.datamodel.obj.lab('tf_worker_image')),
-            default=json.loads(nni.job_json).get('tf_worker_image',conf.get('NNI_TFJOB_DEFAULT_IMAGE','')) if nni and nni.job_json else conf.get('NNI_TFJOB_DEFAULT_IMAGE',''),
-            description='工作节点镜像',
-            widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
-        )
-        self.edit_form_extra_fields['tf_worker_command'] = StringField(
-            _(self.datamodel.obj.lab('tf_worker_command')),
-            default=json.loads(nni.job_json).get('tf_worker_command','python xx.py') if nni and nni.job_json else 'python xx.py',
-            description='工作节点启动命令',
-            widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
-        )
         self.edit_form_extra_fields['job_worker_image'] = StringField(
             _(self.datamodel.obj.lab('job_worker_image')),
             default=json.loads(nni.job_json).get('job_worker_image',conf.get('NNI_JOB_DEFAULT_IMAGE','')) if nni and nni.job_json else conf.get('NNI_JOB_DEFAULT_IMAGE',''),
@@ -345,86 +321,19 @@ class NNI_ModelView_Base():
             widget=MyBS3TextAreaFieldWidget(),
             validators=[DataRequired()]
         )
-        self.edit_form_extra_fields['pytorch_worker_num'] = IntegerField(
-            _(self.datamodel.obj.lab('pytorch_worker_num')),
-            default=json.loads(nni.job_json).get('pytorch_worker_num', 3) if nni and nni.job_json else 3,
-            description='工作节点数目',
-            widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
-        )
-        self.edit_form_extra_fields['pytorch_worker_image'] = StringField(
-            _(self.datamodel.obj.lab('pytorch_worker_image')),
-            default=json.loads(nni.job_json).get('pytorch_worker_image',conf.get('NNI_PYTORCHJOB_DEFAULT_IMAGE','')) if nni and nni.job_json else conf.get('NNI_PYTORCHJOB_DEFAULT_IMAGE',''),
-            description='工作节点镜像',
-            widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
-        )
-        self.edit_form_extra_fields['pytorch_master_command'] = StringField(
-            _(self.datamodel.obj.lab('pytorch_master_command')),
-            default=json.loads(nni.job_json).get('pytorch_master_command',
-                                                'python xx.py') if nni and nni.job_json else 'python xx.py',
-            description='master节点启动命令',
-            widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
-        )
-        self.edit_form_extra_fields['pytorch_worker_command'] = StringField(
-            _(self.datamodel.obj.lab('pytorch_worker_command')),
-            default=json.loads(nni.job_json).get('pytorch_worker_command',
-                                                'python xx.py') if nni and nni.job_json else 'python xx.py',
-            description='工作节点启动命令',
-            widget=BS3TextFieldWidget(),
-            validators=[DataRequired()]
-        )
 
-        self.edit_columns = ['job_type','project','name','namespace','describe','parallel_trial_count','max_trial_count',
+
+        self.edit_columns = ['project','name','describe','parallel_trial_count','max_trial_count',
                           'objective_type','objective_goal','objective_metric_name','objective_additional_metric_names',
-                          'algorithm_name','algorithm_setting','parameters_demo',
-                          'parameters']
+                          'algorithm_name','algorithm_setting','parameters']
         self.edit_fieldsets=[(
             lazy_gettext('common'),
             {"fields":  copy.deepcopy(self.edit_columns), "expanded": True},
         )]
 
-        if job_type=='TFJob':
-            group_columns = ['tf_worker_num','tf_worker_image','tf_worker_command']
-            self.edit_fieldsets.append((
-                lazy_gettext(job_type),
-                {"fields":group_columns, "expanded": True},
-            )
-            )
-            for column in group_columns:
-                self.edit_columns.append(column)
-        if job_type=='Job':
-            group_columns = ['job_worker_image','job_worker_command']
-            self.edit_fieldsets.append((
-                lazy_gettext(job_type),
-                {"fields":group_columns, "expanded": True},
-            )
-            )
-            for column in group_columns:
-                self.edit_columns.append(column)
-        if job_type=='PyTorchJob':
-            group_columns = ['pytorch_worker_num','pytorch_worker_image','pytorch_master_command','pytorch_worker_command']
-            self.edit_fieldsets.append((
-                lazy_gettext(job_type),
-                {"fields":group_columns, "expanded": True},
-            )
-            )
-            for column in group_columns:
-                self.edit_columns.append(column)
-
-        if job_type=='XGBoostJob':
-            group_columns = ['pytorchjob_worker_image','pytorchjob_worker_command']
-            self.edit_fieldsets.append((
-                lazy_gettext(job_type),
-                {"fields":group_columns, "expanded": True},
-            )
-            )
-            for column in group_columns:
-                self.edit_columns.append(column)
 
 
-        task_column=['working_dir','resource_memory','resource_cpu']
+        task_column=['job_worker_image','working_dir','job_worker_command','resource_memory','resource_cpu']
         self.edit_fieldsets.append((
             lazy_gettext('task args'),
             {"fields": task_column, "expanded": True},
@@ -467,7 +376,7 @@ class NNI_ModelView_Base():
 
         from myapp.utils.py.py_k8s import K8s
         k8s_client = K8s(nni.project.cluster.get('KUBECONFIG',''))
-        namespace = conf.get('KATIB_NAMESPACE')
+        namespace = conf.get('AUTOML_NAMESPACE','katib')
         run_id='nni-'+nni.name
 
         try:
@@ -662,7 +571,7 @@ tuner:
 trial:
   codeDir: {nni.working_dir}  
 frameworkcontrollerConfig:
-  namespace: {conf.get('KATIB_NAMESPACE','katib')}
+  namespace: {conf.get('AUTOML_NAMESPACE','katib')}
   storage: pvc
   configPath: /mnt/{nni.created_by.username}/nni/{nni.name}/trial_template.yaml  
   pvc: 
@@ -697,7 +606,7 @@ frameworkcontrollerConfig:
         print(command)
         self.deploy_nni_service(nni,command)
 
-        return redirect('/nni_modelview/list/')
+        return redirect(conf.get('MODEL_URLS',{}).get('nni',''))
 
     # @pysnooper.snoop(watch_explode=())
     def merge_trial_spec(self,item):
@@ -716,65 +625,26 @@ frameworkcontrollerConfig:
         ]
 
         item.job_json={}
-        if item.job_type=='TFJob':
-            item.trial_spec=core.merge_tfjob_experiment_template(
-                worker_num=item.tf_worker_num,
-                node_selector=item.get_node_selector(),
-                volume_mount=item.volume_mount,
-                image=item.tf_worker_image,
-                image_secrets = image_secrets,
-                hostAliases=conf.get('HOSTALIASES', ''),
-                workingDir=item.working_dir,
-                image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
-                resource_memory=item.resource_memory,
-                resource_cpu=item.resource_cpu,
-                command=item.tf_worker_command
-            )
-            item.job_json={
-                "tf_worker_num":item.tf_worker_num,
-                "tf_worker_image": item.tf_worker_image,
-                "tf_worker_command": item.tf_worker_command,
-            }
-        if item.job_type == 'Job':
-            item.trial_spec=core.merge_job_experiment_template(
-                node_selector=item.get_node_selector(),
-                volume_mount=item.volume_mount,
-                image=item.job_worker_image,
-                image_secrets=image_secrets,
-                hostAliases=conf.get('HOSTALIASES', ''),
-                workingDir=item.working_dir,
-                image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
-                resource_memory=item.resource_memory,
-                resource_cpu=item.resource_cpu,
-                command=item.job_worker_command
-            )
 
-            item.job_json = {
-                "job_worker_image": item.job_worker_image,
-                "job_worker_command": item.job_worker_command,
-            }
-        if item.job_type == 'PyTorchJob':
-            item.trial_spec=core.merge_pytorchjob_experiment_template(
-                worker_num=item.pytorch_worker_num,
-                node_selector=item.get_node_selector(),
-                volume_mount=item.volume_mount,
-                image=item.pytorch_worker_image,
-                image_secrets=image_secrets,
-                hostAliases=conf.get('HOSTALIASES', ''),
-                workingDir=item.working_dir,
-                image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
-                resource_memory=item.resource_memory,
-                resource_cpu=item.resource_cpu,
-                master_command=item.pytorch_master_command,
-                worker_command=item.pytorch_worker_command
-              )
 
-            item.job_json = {
-                "pytorch_worker_num":item.pytorch_worker_num,
-                "pytorch_worker_image": item.pytorch_worker_image,
-                "pytorch_master_command": item.pytorch_master_command,
-                "pytorch_worker_command": item.pytorch_worker_command,
-            }
+        item.trial_spec=core.merge_job_experiment_template(
+            node_selector=item.get_node_selector(),
+            volume_mount=item.volume_mount,
+            image=item.job_worker_image,
+            image_secrets=image_secrets,
+            hostAliases=conf.get('HOSTALIASES', ''),
+            workingDir=item.working_dir,
+            image_pull_policy=conf.get('IMAGE_PULL_POLICY','Always'),
+            resource_memory=item.resource_memory,
+            resource_cpu=item.resource_cpu,
+            command=item.job_worker_command
+        )
+
+        item.job_json = {
+            "job_worker_image": item.job_worker_image,
+            "job_worker_command": item.job_worker_command,
+        }
+
         item.job_json = json.dumps(item.job_json,indent=4,ensure_ascii=False)
 
 
@@ -790,21 +660,22 @@ frameworkcontrollerConfig:
         nni = db.session.query(NNI).filter_by(id=nni_id).first()
         from myapp.utils.py.py_k8s import K8s
         k8s = K8s(nni.project.cluster.get('KUBECONFIG',''))
-        namespace = conf.get('KATIB_NAMESPACE')
+        namespace = conf.get('AUTOML_NAMESPACE')
         pod = k8s.get_pods(namespace=namespace, pod_name=nni.name)
         if pod:
             pod = pod[0]
             return redirect("/myapp/web/log/%s/%s/%s" % (nni.project.cluster['NAME'],namespace, nni.name))
 
         flash("未检测到当前搜索正在运行的容器",category='success')
-        return redirect('/nni_modelview/list/')
+        return redirect(conf.get('MODEL_URLS',{}).get('nni',''))
 
 
     # @pysnooper.snoop()
     def pre_add(self, item):
 
         if item.job_type is None:
-            raise MyappException("Job type is mandatory")
+            item.job_type='Job'
+        #     raise MyappException("Job type is mandatory")
 
         if not item.volume_mount:
             item.volume_mount = item.project.volume_mount
@@ -846,26 +717,24 @@ class NNI_ModelView(NNI_ModelView_Base,MyappModelView):
     conv = GeneralModelConverter(datamodel)
 
 
-appbuilder.add_separator("训练")   # 在指定菜单栏下面的每个子菜单中间添加一个分割线的显示。
 # 添加视图和菜单
 # appbuilder.add_view(NNI_ModelView,"nni超参搜索",icon = 'fa-shopping-basket',category = '超参搜索',category_icon = 'fa-share-alt')
-appbuilder.add_view(NNI_ModelView,"nni超参搜索",icon = 'fa-shopping-basket',category = '训练')
+appbuilder.add_view_no_menu(NNI_ModelView)
+# appbuilder.add_view_no_menu(NNI_ModelView)
 
 # 添加api
 class NNI_ModelView_Api(NNI_ModelView_Base,MyappModelRestApi):
     datamodel = SQLAInterface(NNI)
     conv = GeneralModelConverter(datamodel)
     route_base = '/nni_modelview/api'
-    list_columns = ['created_by','changed_by','created_on','changed_on','job_type','name','namespace','describe',
+    list_columns = ['project','describe_url','creator','modified','run','log']
+    add_columns = ['project','name','describe',
                     'parallel_trial_count','max_trial_count','objective_type',
                     'objective_goal','objective_metric_name','objective_additional_metric_names','algorithm_name',
-                    'algorithm_setting','parameters','job_json','trial_spec','working_dir','node_selector',
-                    'image_pull_policy','resource_memory','resource_cpu','experiment','alert_status']
-    add_columns = ['job_type','name','namespace','describe',
-                    'parallel_trial_count','max_trial_count','objective_type',
-                    'objective_goal','objective_metric_name','objective_additional_metric_names','algorithm_name',
-                    'algorithm_setting','parameters','job_json','working_dir','node_selector','image_pull_policy',
-                   'resource_memory','resource_cpu']
+                    'algorithm_setting','parameters','job_json','working_dir','node_selector',
+                   'resource_memory','resource_cpu','alert_status','job_worker_image','job_worker_command']
     edit_columns = add_columns
 appbuilder.add_api(NNI_ModelView_Api)
+
+
 

@@ -21,7 +21,7 @@ from myapp.models.helpers import AuditMixinNullable, ImportMixin
 from flask import escape, g, Markup, request
 from myapp import app,db
 from myapp.models.helpers import ImportMixin
-# 添加自定义model
+
 from sqlalchemy import Column, Integer, String, ForeignKey ,Date,DateTime
 from flask_appbuilder.models.decorators import renders
 from flask import Markup
@@ -31,7 +31,7 @@ conf = app.config
 from myapp.utils.py import py_k8s
 
 
-# 定义model
+
 class Notebook(Model,AuditMixinNullable,MyappModelBase):
     __tablename__ = 'notebook'
     id = Column(Integer, primary_key=True)
@@ -48,8 +48,8 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
     volume_mount = Column(String(400), default='kubeflow-user-workspace(pvc):/mnt,kubeflow-archives(pvc):/archives')  # 挂载
     node_selector = Column(String(200), default='cpu=true,notebook=true')  # 挂载
     image_pull_policy = Column(Enum('Always', 'IfNotPresent'), nullable=True, default='Always')
-    resource_memory = Column(String(100), default='2G')
-    resource_cpu = Column(String(100), default='2')
+    resource_memory = Column(String(100), default='10G')
+    resource_cpu = Column(String(100), default='10')
     resource_gpu = Column(String(100), default='0')
     expand = Column(Text(65536), default='')
 
@@ -68,7 +68,7 @@ class Notebook(Model,AuditMixinNullable,MyappModelBase):
         if JUPYTER_DOMAIN:
             host = "http://"+JUPYTER_DOMAIN
         else:
-            host = "http://"+request.host # 使用当前域名打开
+            host = request.host_url.strip('/') # 使用当前域名打开
 
         # 对于有边缘节点，直接使用边缘集群的代理ip
         SERVICE_EXTERNAL_IP = json.loads(self.project.expand).get('SERVICE_EXTERNAL_IP',None) if self.project.expand else None

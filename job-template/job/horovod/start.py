@@ -41,20 +41,10 @@ KFJ_TASK_RESOURCE_CPU = os.getenv('KFJ_TASK_RESOURCE_CPU', '')
 KFJ_TASK_RESOURCE_MEMORY = os.getenv('KFJ_TASK_RESOURCE_MEMORY', '')
 NUM_WORKER = 3
 COMMAND=''
-WORK_IMAGES='csighub.tencentyun.com/tme-kubeflow/horovod:cpu-20210401'
+WORK_IMAGES='ccr.ccs.tencentyun.com/cube-studio/horovod:20210401'
 WORKIMG_DIR ='/mnt/admin'
 
 k8s_volumes, k8s_volume_mounts = k8s_client.get_volume_mounts(KFJ_TASK_VOLUME_MOUNT,KFJ_CREATOR)
-
-
-# k8s_volumes.append(
-#     {
-#         "name": "dshm",
-#         "emptyDir": {
-#             "medium": "Memory"
-#         }
-#     }
-# )
 
 print(k8s_volumes)
 print(k8s_volume_mounts)

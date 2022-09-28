@@ -1,7 +1,7 @@
 from flask import render_template,redirect
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 
-# 将model添加成视图，并控制在前端的显示
+
 from myapp.models.model_job import Repository,Images,Job_Template,Task,Pipeline,Workflow,Tfjob,Xgbjob,RunHistory,Pytorchjob
 
 from myapp import app, appbuilder,db,event_logger
@@ -61,10 +61,14 @@ class RunHistory_ModelView_Base():
     datamodel = SQLAInterface(RunHistory)
     base_order = ('id', 'desc')
     order_columns = ['id']
-
+    base_permissions = ['can_show', 'can_list', 'can_delete']
     list_columns = ['pipeline_url','creator','created_on','execution_date','status_url','log','history']
+    cols_width={
+        "pipeline_url": {"type": "ellip2", "width": 400},
+        "created_on":{"type": "ellip2", "width": 300}
+    }
     edit_columns = ['status']
-    base_filters = [["id", RunHistory_Filter, lambda: []]]  # 设置权限过滤器
+    base_filters = [["id", RunHistory_Filter, lambda: []]]
     add_form_extra_fields = {
         "status": SelectField(
             _(datamodel.obj.lab('status')),
@@ -79,7 +83,7 @@ class RunHistory_ModelView_Base():
 class RunHistory_ModelView(RunHistory_ModelView_Base,MyappModelView,DeleteMixin):
     datamodel = SQLAInterface(RunHistory)
 
-appbuilder.add_view(RunHistory_ModelView,"定时调度记录",icon = 'fa-clock-o',category = '训练')
+appbuilder.add_view_no_menu(RunHistory_ModelView)
 
 
 

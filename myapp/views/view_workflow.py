@@ -3,7 +3,7 @@ from flask_appbuilder.models.sqla.interface import SQLAInterface
 
 from flask_babel import gettext as __
 
-# 将model添加成视图，并控制在前端的显示
+
 from myapp.models.model_job import Repository,Images,Job_Template,Task,Pipeline,Workflow,Tfjob,Xgbjob,RunHistory,Pytorchjob
 from myapp.models.model_team import Project,Project_User
 from flask_appbuilder.actions import action
@@ -77,7 +77,7 @@ class Crd_ModelView_Base():
     list_columns = ['name','namespace_url','create_time','status','username','stop']
     show_columns = ['name','namespace','create_time','status','annotations_html','labels_html','spec_html','status_more_html','info_json_html']
     order_columns = ['id']
-
+    base_permissions = ['can_show', 'can_list', 'can_delete']
     # base_permissions = ['list','delete','show']
     # label_columns = {
     #     "annotations_html": _("Annotations"),
@@ -93,7 +93,7 @@ class Crd_ModelView_Base():
     # }
     crd_name = ''
     base_order = ('create_time', 'desc')
-    base_filters = [["id", CRD_Filter, lambda: []]]  # 设置权限过滤器
+    base_filters = [["id", CRD_Filter, lambda: []]]
 
 
     # list
@@ -165,7 +165,7 @@ class Crd_ModelView_Base():
     def stop(self, crd_id):
         crd = db.session.query(self.datamodel.obj).filter_by(id=crd_id).first()
         self.base_muldelete([crd])
-        flash('清理完成','warning')
+        flash('清理完成','success')
         self.update_redirect()
         return redirect(self.get_redirect())
 
@@ -214,11 +214,12 @@ class Workflow_Filter(MyappFilter):
         ).order_by(self.model.create_time.desc())
 
 # list正在运行的workflow
-class Workflow_ModelView(Crd_ModelView_Base,MyappModelView,DeleteMixin):
+class Workflow_ModelView_Base(Crd_ModelView_Base):
 
-    base_filters = [["id", Workflow_Filter, lambda: []]]  # 设置权限过滤器
+    base_filters = [["id", Workflow_Filter, lambda: []]]
 
     # 删除之前的 workflow和相关容器
+    # @pysnooper.snoop()
     def delete_workflow(self, workflow):
         try:
             k8s_client = py_k8s.K8s(workflow.pipeline.project.cluster.get('KUBECONFIG',''))
@@ -239,27 +240,34 @@ class Workflow_ModelView(Crd_ModelView_Base,MyappModelView,DeleteMixin):
         workflow = db.session.query(self.datamodel.obj).filter_by(id=crd_id).first()
         self.delete_workflow(workflow)
 
-        flash('清理完成','warning')
-        self.update_redirect()
-        return redirect(self.get_redirect())
-
+        flash('清理完成','success')
+        url = conf.get('MODEL_URLS',{}).get('workflow','')
+        return redirect(url)
 
     label_title = '运行实例'
     datamodel = SQLAInterface(Workflow)
     list_columns = ['project','pipeline_url', 'create_time','change_time','elapsed_time', 'final_status','status', 'username', 'log','stop']
+    search_columns = ['status','labels','name','annotations','spec','status_more','username','create_time']
+    cols_width = {
+        "project": {"type": "ellip2", "width": 200},
+        "pipeline_url": {"type": "ellip2", "width": 400},
+        "create_time": {"type": "ellip2", "width": 200},
+        "change_time": {"type": "ellip2", "width": 200}
+    }
     show_columns = ['name', 'namespace', 'create_time', 'status','task_status', 'annotations_html', 'labels_html', 'spec_html','status_more_html', 'info_json_html']
     crd_name = 'workflow'
 
-appbuilder.add_view(Workflow_ModelView,"运行实例",href='/workflow_modelview/list/?_flt_2_name=&_flt_2_labels=',icon = 'fa-tasks',category = '训练')
+class Workflow_ModelView(Workflow_ModelView_Base,MyappModelView,DeleteMixin):
+    datamodel = SQLAInterface(Workflow)
 
+
+appbuilder.add_view_no_menu(Workflow_ModelView)
 
 # 添加api
-class Workflow_ModelView_Api(Crd_ModelView_Base,MyappModelRestApi):
+class Workflow_ModelView_Api(Workflow_ModelView_Base,MyappModelRestApi):
 
     datamodel = SQLAInterface(Workflow)
     route_base = '/workflow_modelview/api'
-    list_columns = ['name', 'namespace_url', 'create_time', 'status', 'username', 'log']
-    crd_name = 'workflow'
 
 appbuilder.add_api(Workflow_ModelView_Api)
 
@@ -268,7 +276,6 @@ appbuilder.add_api(Workflow_ModelView_Api)
 
 
 
-# appbuilder.add_separator("训练")   # 在指定菜单栏下面的每个子菜单中间添加一个分割线的显示。
 #
 #
 # # list正在运行的tfjob

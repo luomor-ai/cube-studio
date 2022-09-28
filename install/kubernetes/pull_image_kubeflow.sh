@@ -24,7 +24,7 @@ docker pull ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-scheduledworkf
 docker pull ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-argoexec:v2.7.5-license-compliance && docker tag ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-argoexec:v2.7.5-license-compliance gcr.io/ml-pipeline/argoexec:v2.7.5-license-compliance &
 docker pull ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-argoexec:v2.12.9-license-compliance && docker tag ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-argoexec:v2.12.9-license-compliance gcr.io/ml-pipeline/argoexec:v2.12.9-license-compliance &
 docker pull ccr.ccs.tencentyun.com/cube-studio/mysql:5.7 && docker tag ccr.ccs.tencentyun.com/cube-studio/mysql:5.7 mysql:5.7 &
-docker pull ccr.ccs.tencentyun.com/cube-studio/bitnami-redis && docker tag ccr.ccs.tencentyun.com/cube-studio/bitnami-redis bitnami/redis &
+docker pull ccr.ccs.tencentyun.com/cube-studio/bitnami-redis:4.0.14 && docker tag ccr.ccs.tencentyun.com/cube-studio/bitnami-redis:4.0.14 bitnami/redis:4.0.14 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-metadata-envoy:1.6.0 && docker tag ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-metadata-envoy:1.6.0 gcr.io/ml-pipeline/metadata-envoy:1.6.0 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-operator:v0.46.0 && docker tag ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-operator:v0.46.0 quay.io/prometheus-operator/prometheus-operator:v0.46.0 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/spark-operator:v1beta2-1.3.7-3.1.1 && docker tag ccr.ccs.tencentyun.com/cube-studio/spark-operator:v1beta2-1.3.7-3.1.1 ccr.ccs.tencentyun.com/cube-studio/spark-operator:v1beta2-1.3.7-3.1.1 &
@@ -36,7 +36,7 @@ docker pull ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-prometheus:v2.
 docker pull ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-prometheus:v2.3.1 && docker tag ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-prometheus:v2.3.1 quay.io/prometheus/prometheus:v2.3.1 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/kubesigs-kube-batch:v0.5 && docker tag ccr.ccs.tencentyun.com/cube-studio/kubesigs-kube-batch:v0.5 kubesigs/kube-batch:v0.5 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-node-exporter:v0.15.2 && docker tag ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-node-exporter:v0.15.2 quay.io/prometheus/node-exporter:v0.15.2 &
-docker pull ccr.ccs.tencentyun.com/cube-studio/grafana-grafana:7.5.2 && docker tag ccr.ccs.tencentyun.com/cube-studio/grafana-grafana:7.5.2 grafana/grafana:7.5.2 &
+docker pull ccr.ccs.tencentyun.com/cube-studio/grafana-grafana:9.1.5 && docker tag ccr.ccs.tencentyun.com/cube-studio/grafana-grafana:9.1.5 grafana/grafana:9.1.5 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/kubeflow:training-operator && docker tag ccr.ccs.tencentyun.com/cube-studio/kubeflow:training-operator ccr.ccs.tencentyun.com/cube-studio/kubeflow:training-operator &
 docker pull ccr.ccs.tencentyun.com/cube-studio/metacontroller-metacontroller:v0.3.0 && docker tag ccr.ccs.tencentyun.com/cube-studio/metacontroller-metacontroller:v0.3.0 metacontroller/metacontroller:v0.3.0 &
 docker pull ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-workflow-controller:v2.12.9-license-compliance && docker tag ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-workflow-controller:v2.12.9-license-compliance gcr.io/ml-pipeline/workflow-controller:v2.12.9-license-compliance &

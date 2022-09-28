@@ -148,21 +148,30 @@ def delete_workflow(task):
     workflow_info = conf.get("CRD_INFO", {}).get('workflow', {})
     print(workflow_info)
     if workflow_info:
-        delete_old_crd(workflow_info)
+        try:
+            delete_old_crd(workflow_info)
+        except Exception as e:
+            print(e)
 
     time.sleep(10)
 
     tfjob_info = conf.get("CRD_INFO", {}).get('tfjob', {})
     print(tfjob_info)
     if tfjob_info:
-        delete_old_crd(tfjob_info)
+        try:
+            delete_old_crd(tfjob_info)
+        except Exception as e:
+            print(e)
 
     time.sleep(10)
 
     pytorchjob_info = conf.get("CRD_INFO", {}).get('pytorchjob', {})
     print(pytorchjob_info)
     if pytorchjob_info:
-        delete_old_crd(pytorchjob_info)
+        try:
+            delete_old_crd(pytorchjob_info)
+        except Exception as e:
+            print(e)
 
     time.sleep(10)
 
@@ -170,21 +179,60 @@ def delete_workflow(task):
     xgbjob_info = conf.get("CRD_INFO", {}).get('xgbjob', {})
     print(xgbjob_info)
     if xgbjob_info:
-        delete_old_crd(xgbjob_info)
+        try:
+            delete_old_crd(xgbjob_info)
+        except Exception as e:
+            print(e)
 
     time.sleep(10)
 
-    xgbjob_info = conf.get("CRD_INFO", {}).get('mpijob', {})
-    print(xgbjob_info)
-    if xgbjob_info:
-        delete_old_crd(xgbjob_info)
+    mpijob_info = conf.get("CRD_INFO", {}).get('mpijob', {})
+    print(mpijob_info)
+    if mpijob_info:
+        try:
+            delete_old_crd(mpijob_info)
+        except Exception as e:
+            print(e)
 
     time.sleep(10)
 
     vcjob_info = conf.get("CRD_INFO", {}).get('vcjob', {})
     print(vcjob_info)
     if vcjob_info:
-        delete_old_crd(vcjob_info)
+        try:
+            delete_old_crd(vcjob_info)
+        except Exception as e:
+            print(e)
+
+    time.sleep(10)
+
+    sparkjob_info = conf.get("CRD_INFO", {}).get('sparkjob', {})
+    print(sparkjob_info)
+    if sparkjob_info:
+        try:
+            delete_old_crd(sparkjob_info)
+        except Exception as e:
+            print(e)
+
+    time.sleep(10)
+
+    paddlejob_info = conf.get("CRD_INFO", {}).get('paddlejob', {})
+    print(paddlejob_info)
+    if paddlejob_info:
+        try:
+            delete_old_crd(paddlejob_info)
+        except Exception as e:
+            print(e)
+
+    time.sleep(10)
+
+    mxjob_info = conf.get("CRD_INFO", {}).get('mxjob', {})
+    print(mxjob_info)
+    if mxjob_info:
+        try:
+            delete_old_crd(mxjob_info)
+        except Exception as e:
+            print(e)
 
     time.sleep(10)
 
@@ -508,7 +556,10 @@ def make_timerun_config(task):
 
             pipelines = dbsession.query(Pipeline).filter(Pipeline.schedule_type=='crontab').all()  # 获取model记录
             for pipeline in pipelines:  # 循环发起每一个调度
-                start_at = datetime.datetime.strptime(pipeline.cronjob_start_time,'%Y-%m-%d %H:%M:%S')
+                if pipeline.cronjob_start_time:
+                    start_at = datetime.datetime.strptime(pipeline.cronjob_start_time,'%Y-%m-%d %H:%M:%S')
+                else:
+                    start_at=datetime.datetime.now()
 
                 # 缩小指定范围，认为最后一个任务记录之前是调度记录都是已经产生的
                 last_run = dbsession.query(RunHistory).filter(RunHistory.pipeline_id==pipeline.id).order_by(RunHistory.id.desc()).first()
@@ -1178,4 +1229,114 @@ def adjust_node_resource(task):
             push_message(conf.get('ADMIN_USER').split(','), '集群 %s 调整项目组 %s 下 gpu机器 %s 到项目组%s' % (cluster_name, min_gpu_org, ','.join(adjust_node), max_gpu_org))
             k8s_client.label_node(adjust_node,labels={"org":max_gpu_org})
             return
+
+
+# get_dir_size('/data/k8s/kubeflow/pipeline/workspace')
+@pysnooper.snoop()
+def get_deployment_node_selector(name,namespace):
+    from kubernetes import client, config, watch
+    from kubernetes.client.models import v1_pod, v1_object_meta, v1_pod_spec, v1_deployment, v1_deployment_spec
+    exist_dp = client.AppsV1Api().read_namespaced_deployment(name=name, namespace=namespace)
+
+    node_selector = {}
+    try:
+        # aa=client.V1NodeSelector
+        if exist_dp.spec.template.spec.affinity.node_affinity and exist_dp.spec.template.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution:
+            match_expressions = exist_dp.spec.template.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution.node_selector_terms
+            match_expressions = [ex.match_expressions for ex in match_expressions]
+            match_expressions = match_expressions[0]
+            for match_expression in match_expressions:
+                if match_expression.operator == 'In':
+                    node_selector[match_expression.key] = match_expression.values[0]
+                if match_expression.operator == 'Equal':
+                    node_selector[match_expression.key] = match_expression.values
+
+    except Exception as e:
+        pass
+
+        # print(e)
+    if exist_dp.spec.template.spec.node_selector:
+        node_selector.update(exist_dp.spec.template.spec.node_selector)
+
+    print(node_selector)
+
+    pass
+
+
+# # 不同优先级的服务之间调节算力
+@celery_app.task(name="task.adjust_service_resource", bind=True)
+@pysnooper.snoop(watch_explode=())
+def adjust_service_resource(task):
+    from kubernetes import client, config, watch
+    cluster_name='tke'
+    namespace = conf.get('SERVICE_NAMESPACE')
+    cluster = conf.get('CLUSTERS', {})[cluster_name]
+    with session_scope(nullpool=True) as dbsession:
+        try:
+            k8s_client = K8s(cluster.get('KUBECONFIG',''))
+            hpas = client.AutoscalingV2beta1Api().list_namespaced_horizontal_pod_autoscaler(namespace=namespace).items
+            for hpa in hpas:
+                inferenceserving = dbsession.query(InferenceService).filter_by(name=hpa.metadata.name).filter_by(model_status='online').first()
+                if not inferenceserving:
+                    message = cluster_name + "：请删除hpa，因" + hpa.metadata.name + '服务下线或者不存在'
+                    push_message(conf.get('ADMIN_USER').split(','), message=message)
+                    continue
+                else:
+                    if inferenceserving.resource_gpu and inferenceserving.resource_gpu!='0' and inferenceserving.priority==1:
+                        # print(hpa)
+                        target_utilizations = hpa.spec.metrics
+                        current_utilization = hpa.status.current_metrics
+                        current_replicas = hpa.status.current_replicas
+                        desired_replicas = hpa.status.desired_replicas
+                        if desired_replicas>current_replicas:  # 期望扩容
+                            pass
+                            # 如果没有扩张，或者持续时间太久，就缩小低优先级服务
+                            if not hpa.status.last_scale_time or datetime.datetime.now().timestamp() - hpa.status.last_scale_time.astimezone(datetime.timezone(datetime.timedelta(hours=8))).timestamp() > 400:
+                                push_message(conf.get('ADMIN_USER').split(','),'寻找扩服务%s一卡'%(inferenceserving.name,))
+                                target_node_selector = get_deployment_node_selector(name=inferenceserving.name,namespace=namespace)
+
+                                # 获取同项目组，低优先级的推理
+                                low_inferenceservings =dbsession.query(InferenceService).filter_by(priority=0).filter_by(project_id=service.project_id).all()
+                                low_inferenceservings.sort(key=lambda item:item.max_replicas-item.min_replicas)  # 从大到小排序
+                                for service in low_inferenceservings:
+                                    if service.resource_gpu and service.resource_gpu!='0':  #
+                                        current_replicas = client.AppsV1Api().read_namespaced_deployment(name=service.name, namespace=namespace).spec.replicas
+                                        # 如果当前副本数大于最小副本数
+                                        if current_replicas > service.min_replicas:
+                                            # 随意缩放一个pod
+                                            if not target_node_selector.get('gpu-type',''):
+                                                api_response = client.AppsV1Api().patch_namespaced_deployment_scale(service.name, namespace,[{'op': 'replace', 'path': '/spec/replicas', 'value': current_replicas-1}])
+                                                push_message([service.created_by.username,inferenceserving.created_by.username]+conf.get('ADMIN_USER').split(','),'缩服务%s一卡，扩服务%s一卡'%(service.name,inferenceserving.name))
+                                                return
+                                            # 缩放指定pod
+                                            else:
+                                                node_selector = get_deployment_node_selector(name=service.name,namespace=namespace)
+                                                target_gpu_type = target_node_selector['gpu-type']
+                                                exist_gpu_type = node_selector.get('gpu-type','')
+                                                if exist_gpu_type and exist_gpu_type!=target_gpu_type:
+                                                    print('服务gpu卡型不匹配')
+                                                    break
+                                                # 如果低级别服务没有gpu机型限制。就查看是否有符合需求的机器型号，缩放指定pod
+                                                pods = k8s_client.get_pods(namespace=namespace,labels={"app":service.name,"pod-type":"inference"})
+                                                nodeips = [pod['host_ip'] for pod in pods]
+                                                for nodeip in nodeips:
+                                                    node = k8s_client.get_node(nodeip)
+                                                    if node['labels'].get('gpu-type','')==target_gpu_type:
+                                                        # 缩放指定pod
+                                                        can_scale_pods = [pod for pod in pods if pod['host_ip']==nodeip]
+                                                        if can_scale_pods:
+                                                            k8s_client.v1.delete_namespaced_pod(can_scale_pods[0]['name'], namespace,grace_period_seconds=0)
+                                                            client.AppsV1Api().patch_namespaced_deployment_scale(service.name, namespace, [{'op': 'replace', 'path': '/spec/replicas','value': current_replicas - 1}])
+                                                            push_message([service.created_by.username,inferenceserving.created_by.username] + conf.get('ADMIN_USER').split(','), '缩服务%s一卡，扩服务%s一卡' % (service.name, inferenceserving.name))
+
+                                                            return
+
+
+        except Exception as e:
+            print(e)
+
+# if __name__=="__main__":
+#     adjust_service_resource(task=None)
+
+
 

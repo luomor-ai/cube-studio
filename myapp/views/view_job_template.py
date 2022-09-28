@@ -12,7 +12,7 @@ from wtforms.validators import DataRequired, Length, NumberRange, Optional,Regex
 
 from kfp import compiler
 from sqlalchemy.exc import InvalidRequestError
-# 将model添加成视图，并控制在前端的显示
+
 from myapp.models.model_job import Repository,Images,Job_Template,Task,Pipeline,Workflow,Tfjob,Xgbjob,RunHistory,Pytorchjob
 from myapp.models.model_team import Project,Project_User
 from flask_appbuilder.actions import action
@@ -82,18 +82,24 @@ class Job_Tempalte_Filter(MyappFilter):
         # logging.info(join_projects_id)
         return query.filter(self.model.version=='Release')
 
-# 定义数据库视图
+
 class Job_Template_ModelView_Base():
     datamodel = SQLAInterface(Job_Template)
     label_title='任务模板'
-    check_redirect_list_url = '/job_template_modelview/list/?_flt_2_name='
-    help_url = conf.get('HELP_URL', {}).get(datamodel.obj.__tablename__, '') if datamodel else ''
+    check_redirect_list_url = conf.get('MODEL_URLS',{}).get('job_template','')
+
     list_columns = ['project','name_title','version','creator','modified']
+    cols_width = {
+        "name_title":{"type": "ellip2", "width": 300},
+        "name": {"type": "ellip2", "width": 400},
+        "version": {"type": "ellip2", "width": 100},
+        "modified": {"type": "ellip2", "width": 200},
+    }
     show_columns = ['project','name','version','describe','images_url','workdir','entrypoint','args_html','demo_html','env','hostAliases','privileged','expand_html']
     add_columns = ['project','images','name','version','describe','workdir','entrypoint','volume_mount','job_args_definition','args','env','hostAliases','privileged','accounts','demo','expand']
     edit_columns = add_columns
 
-    base_filters = [["id", Job_Tempalte_Filter, lambda: []]]  # 设置权限过滤器
+    base_filters = [["id", Job_Tempalte_Filter, lambda: []]]
     base_order = ('id', 'desc')
     order_columns = ['id']
     add_form_query_rel_fields = {
@@ -105,24 +111,28 @@ class Job_Template_ModelView_Base():
     add_form_extra_fields = {
         "name": StringField(
             _(datamodel.obj.lab('name')),
-            description='英文名(字母、数字、- 组成)，最长50个字符',
+            description='英文名(小写字母、数字、- 组成)，最长50个字符',
+            default='',
             widget=BS3TextFieldWidget(),  # 传给widget函数的是外层的field对象，以及widget函数的参数
             validators=[Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"), Length(1, 54)]
         ),
         "describe": StringField(
             _(datamodel.obj.lab('describe')),
             description="模板的描述将直接显示在pipeline编排界面",
+            default='',
             widget=BS3TextFieldWidget(),
             validators=[DataRequired()]
         ),
         "version": SelectField(
             _(datamodel.obj.lab('version')),
             description="job模板的版本，release版本的模板才能被所有用户看到",
+            default='',
             widget=Select2Widget(),
             choices=version_list
         ),
         "volume_mount": StringField(
             _(datamodel.obj.lab('volume_mount')),
+            default='',
             description='使用该模板的task，会在添加时，自动添加该挂载。<br>外部挂载，格式示例:$pvc_name1(pvc):/$container_path1,$hostpath1(hostpath):/$container_path2,4G(memory):/dev/shm,注意pvc会自动挂载对应目录下的个人rtx子目录',
             widget=BS3TextFieldWidget(),  # 传给widget函数的是外层的field对象，以及widget函数的参数
         ),
@@ -134,6 +144,7 @@ class Job_Template_ModelView_Base():
         "entrypoint": StringField(
             _(datamodel.obj.lab('entrypoint')),
             description='镜像的入口命令，直接写成单行字符串，例如python xx.py，无需添加[]',
+            default='',
             widget=BS3TextFieldWidget(),  # 传给widget函数的是外层的field对象，以及widget函数的参数
         ),
         "job_args_definition": StringField(
@@ -159,11 +170,13 @@ class Job_Template_ModelView_Base():
         ),
         "env": StringField(
             _(datamodel.obj.lab('env')),
+            default='',
             description='使用模板的task自动添加的环境变量，支持模板变量。<br>书写格式:每行一个环境变量env_key=env_value',
             widget=MyBS3TextAreaFieldWidget(rows=3),  # 传给widget函数的是外层的field对象，以及widget函数的参数
         ),
         "hostAliases": StringField(
             _(datamodel.obj.lab('hostAliases')),
+            default='',
             description='添加到容器内的host映射。<br>书写格式:每行一个dns解析记录，ip host1 host2，<br>示例：1.1.1.1 example1.oa.com example2.oa.com',
             widget=MyBS3TextAreaFieldWidget(rows=3),  # 传给widget函数的是外层的field对象，以及widget函数的参数
         ),
@@ -174,6 +187,7 @@ class Job_Template_ModelView_Base():
         ),
         "accounts": StringField(
             _(datamodel.obj.lab('accounts')),
+            default='',
             description='k8s的ServiceAccount，在此类任务运行时会自动挂载此账号，多用于模板用于k8s pod/cr时使用',
             widget=BS3TextFieldWidget(),  # 传给widget函数的是外层的field对象，以及widget函数的参数
             validators=[]
@@ -476,21 +490,38 @@ class Job_Template_ModelView_Base():
         except Exception as e:
             raise e
         return redirect(request.referrer)
-
-class Job_Template_ModelView(Job_Template_ModelView_Base,MyappModelView,DeleteMixin):
-    datamodel = SQLAInterface(Job_Template)
-
-appbuilder.add_view(Job_Template_ModelView,"任务模板",href="/job_template_modelview/list/?_flt_2_name=",icon = 'fa-flag-o',category = '训练',category_icon = 'fa-envelope')
+#
+# class Job_Template_ModelView(Job_Template_ModelView_Base,MyappModelView,DeleteMixin):
+#     datamodel = SQLAInterface(Job_Template)
+#
+# appbuilder.add_view(Job_Template_ModelView,"任务模板",href="/job_template_modelview/list/?_flt_2_name=",icon = 'fa-flag-o',category = '训练',category_icon = 'fa-envelope')
 
 # 添加api
 class Job_Template_ModelView_Api(Job_Template_ModelView_Base,MyappModelRestApi):
     datamodel = SQLAInterface(Job_Template)
     route_base = '/job_template_modelview/api'
-    add_columns = ['project', 'images', 'name', 'version', 'describe', 'args', 'env','hostAliases', 'privileged','accounts', 'demo','expand']
+    # add_columns = ['project', 'images', 'name', 'version', 'describe', 'args', 'env','hostAliases', 'privileged','accounts', 'demo','expand']
+    add_columns = ['project', 'images', 'name', 'version', 'describe', 'workdir', 'entrypoint', 'volume_mount','args', 'env', 'hostAliases', 'privileged', 'accounts', 'expand']
     edit_columns = add_columns
-    list_columns = ['project','name','version','describe','images','workdir','entrypoint','args','demo','env','hostAliases','privileged','accounts','created_by','changed_by','created_on','changed_on','expand']
-    show_columns = ['project','name','version','describe','images_url','workdir','entrypoint','args','demo','env','hostAliases','privileged','expand']
+    # list_columns = ['project','name','version','creator','modified']
+    list_columns = ['project', 'name', 'version', 'describe', 'images', 'workdir', 'entrypoint', 'args', 'demo', 'env',
+                    'hostAliases', 'privileged', 'accounts', 'created_by', 'changed_by', 'created_on', 'changed_on',
+                    'expand']
+    show_columns = ['project','name','version','describe','images','workdir','entrypoint','args','demo','env','hostAliases','privileged','expand']
 
 appbuilder.add_api(Job_Template_ModelView_Api)
+
+class Job_Template_fab_ModelView_Api(Job_Template_ModelView_Base,MyappModelRestApi):
+    datamodel = SQLAInterface(Job_Template)
+    route_base = '/job_template_fab_modelview/api'
+    # add_columns = ['project', 'images', 'name', 'version', 'describe', 'args', 'env','hostAliases', 'privileged','accounts', 'demo','expand']
+    add_columns = ['project', 'images', 'name', 'version', 'describe', 'workdir', 'entrypoint', 'volume_mount','args', 'env', 'hostAliases', 'privileged', 'accounts', 'expand']
+
+    edit_columns = add_columns
+    list_columns = ['project','name','version','creator','modified']
+    show_columns = ['project', 'images', 'name', 'version', 'describe', 'workdir', 'entrypoint', 'volume_mount','args', 'env', 'hostAliases', 'privileged', 'accounts', 'expand']
+
+
+appbuilder.add_api(Job_Template_fab_ModelView_Api)
 
 

@@ -59,6 +59,7 @@ print(k8s_volume_mounts)
 GPU_TYPE= os.getenv('KFJ_GPU_TYPE', 'NVIDIA')
 GPU_RESOURCE= os.getenv('KFJ_TASK_RESOURCE_GPU', '0')
 print(GPU_TYPE,GPU_RESOURCE)
+schedulerName = os.getenv('SCHEDULER', 'default-scheduler')
 
 
 
@@ -159,7 +160,7 @@ def make_tfjob(name,num_workers,image,working_dir,command):
                 }
             },
             "spec": {
-                "schedulerName": "kube-batch",
+                "schedulerName": schedulerName,
                 "restartPolicy": "Never",
                 "volumes": k8s_volumes,
                 "nodeSelector":KFJ_TASK_NODE_SELECTOR,
@@ -258,10 +259,10 @@ def launch_tfjob(name, num_workers, image,working_dir, worker_command):
     k8s_client.create_crd(group=crd_info['group'],version=crd_info['version'],plural=crd_info['plural'],namespace=KFJ_NAMESPACE,body=tfjob_json)
     time.sleep(10)
 
-    print('begin start monitoring thred', flush=True)
+    print('begin start monitoring thread', flush=True)
     # # 后台启动监控脚本
-    monitoring_thred = threading.Thread(target=monitoring,args=(k8s_client,name,KFJ_NAMESPACE))
-    monitoring_thred.start()
+    monitoring_thread = threading.Thread(target=monitoring,args=(k8s_client,name,KFJ_NAMESPACE))
+    monitoring_thread.start()
     while True:
         # 实时打印日志
         line='>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
@@ -287,7 +288,7 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser("TFjob launcher")
     arg_parser.add_argument('--working_dir', type=str, help="运行job的工作目录", default='/mnt/')
     arg_parser.add_argument('--command', type=str, help="运行job的命令", default='python3 mnist.py')
-    arg_parser.add_argument('--num_worker', type=int, help="运行job所在的机器", default=3)
+    arg_parser.add_argument('--num_worker', type=int, help="分布式worker的数量", default=3)
     arg_parser.add_argument('--image', type=str, help="运行job的镜像", default='')
 
     args = arg_parser.parse_args()

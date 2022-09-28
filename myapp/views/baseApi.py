@@ -6,8 +6,11 @@ import traceback
 import urllib.parse
 import os
 from inspect import isfunction
+from sqlalchemy import create_engine
 from flask_appbuilder.actions import action
 from apispec import yaml_utils
+from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
+from wtforms import Field
 from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 from flask_appbuilder.actions import ActionItem
@@ -27,6 +30,7 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 from werkzeug.exceptions import BadRequest
 from flask import render_template,redirect
 import yaml
+from wtforms import widgets
 from marshmallow import validate
 from wtforms import validators
 from flask_appbuilder.api.convert import Model2SchemaConverter
@@ -76,7 +80,7 @@ from flask_appbuilder.exceptions import FABException, InvalidOrderByColumnFABExc
 from flask_appbuilder.security.decorators import permission_name, protect,has_access
 from flask_appbuilder.api import BaseModelApi,BaseApi,ModelRestApi
 from sqlalchemy.sql import sqltypes
-from myapp import app, appbuilder,db,event_logger
+from myapp import app, appbuilder,db,event_logger,cache
 conf = app.config
 
 log = logging.getLogger(__name__)
@@ -92,7 +96,9 @@ API_PERMISSIONS_RIS_KEY="permissions"
 API_USER_PERMISSIONS_RIS_KEY="user_permissions"
 API_RELATED_RIS_KEY="related"
 API_COLS_WIDTH_RIS_KEY='cols_width'
+API_EXIST_ADD_ARGS_RIS_KEY='exist_add_args'
 API_IMPORT_DATA_RIS_KEY = 'import_data'
+API_DOWNLOAD_DATA_RIS_KEY = 'download_data'
 
 def get_error_msg():
     if current_app.config.get("FAB_API_SHOW_STACKTRACE"):
@@ -280,6 +286,10 @@ class MyappModelRestApi(ModelRestApi):
     base_permissions=['can_add','can_show','can_edit','can_list','can_delete']
     cols_width={}
     import_data=False
+    download_data=False
+    pre_upload = None
+    set_columns_related=None
+
     # def pre_list(self,**kargs):
     #     return
 
@@ -377,6 +387,11 @@ class MyappModelRestApi(ModelRestApi):
 
     def _init_model_schemas(self):
         # Create Marshmalow schemas if one is not specified
+
+        # for column_name in self.edit_columns:
+        #     if column_name not in self.add_columns:
+        #         self.add_columns.append(column_name)
+
         if self.list_model_schema is None:
             self.list_model_schema = self.model2schemaconverter.convert(
                 self.list_columns
@@ -435,13 +450,35 @@ class MyappModelRestApi(ModelRestApi):
         # 固定常用的几个字段的宽度
         # print(self.cols_width)
 
-
+    # 将列宽信息加入
     def merge_cols_width(self, response, **kwargs):
         response[API_COLS_WIDTH_RIS_KEY] = self.cols_width
 
-    def merge_import_data(self, response, **kwargs):
+    # 将是否批量导入加入
+    def merge_ops_data(self, response, **kwargs):
         response[API_IMPORT_DATA_RIS_KEY] = self.import_data
+        response[API_DOWNLOAD_DATA_RIS_KEY] = self.download_data
 
+    # 重新渲染add界面
+    # @pysnooper.snoop()
+    def merge_exist_add_args(self, response, **kwargs):
+        exist_add_args = request.args.get('exist_add_args','')
+        if exist_add_args:
+            exist_add_args = json.loads(exist_add_args)
+            # 把这些值转为add_column中的默认值
+            # print(response[API_ADD_COLUMNS_RIS_KEY])
+            response_add_columns = {}
+            for column in response[API_ADD_COLUMNS_RIS_KEY]:
+                if column['name'] in exist_add_args and exist_add_args[column['name']]:
+                    column['default']=exist_add_args[column['name']]
+                response_add_columns[column['name']]=column
+            # 提供字段变换内容
+            if self.set_columns_related:
+                try:
+                    self.set_columns_related(exist_add_args,response_add_columns)
+                    response[API_ADD_COLUMNS_RIS_KEY] = list(response_add_columns.values())
+                except Exception as e:
+                    print(e)
 
     # 根据columnsfields 转化为 info的json信息
     # @pysnooper.snoop()
@@ -465,10 +502,17 @@ class MyappModelRestApi(ModelRestApi):
             col_info['choices'] = column_field_kwargs.get('choices', [])
             if 'widget' in column_field_kwargs:
                 col_info['widget'] = column_field_kwargs['widget'].__class__.__name__.replace('Widget', '').replace('Field','').replace('My', '')
-                col_info['disable'] = column_field_kwargs['widget'].readonly if hasattr(column_field_kwargs['widget'],'readonly') else False
-                # if hasattr(column_field_kwargs['widget'],'can_input'):
-                #     print(field.name,column_field_kwargs['widget'].can_input)
-                col_info['ui-type'] = 'input-select' if hasattr(column_field_kwargs['widget'], 'can_input') and column_field_kwargs['widget'].can_input else False
+                if hasattr(column_field_kwargs['widget'],'readonly') and column_field_kwargs['widget'].readonly:
+                    col_info['disable'] = True
+                # 处理可选可填类型
+                if hasattr(column_field_kwargs['widget'], 'can_input') and column_field_kwargs['widget'].can_input:
+                    col_info['ui-type'] = 'input-select'
+                # 处理时间类型
+                if hasattr(column_field_kwargs['widget'], 'is_date') and column_field_kwargs['widget'].is_date:
+                    col_info['ui-type'] = 'datePicker'
+                # 处理时间类型
+                if hasattr(column_field_kwargs['widget'], 'is_date_range') and column_field_kwargs['widget'].is_date_range:
+                    col_info['ui-type'] = 'rangePicker'
 
             col_info = self.make_ui_info(col_info)
             ret.append(col_info)
@@ -525,6 +569,10 @@ class MyappModelRestApi(ModelRestApi):
             self.edit_query_rel_fields,
             **_kwargs,
         )
+        # 处理retry_info，如果有这种类型，就禁止编辑
+        for column in edit_columns:
+            if column.get('retry_info',False):
+                column['disable']=True
         response[API_EDIT_COLUMNS_RES_KEY] = edit_columns
 
 
@@ -614,7 +662,29 @@ class MyappModelRestApi(ModelRestApi):
                 search_filters[col]['type'] = column_field.field_class.__name__.replace('Field', '').replace('My','')
                 search_filters[col]['choices'] = column_field_kwargs.get('choices', [])
                 # 选-填 字段在搜索时为填写字段
-                search_filters[col]['ui-type'] = 'input' if hasattr(column_field_kwargs.get('widget',{}),'can_input') and column_field_kwargs['widget'].can_input else False
+                if hasattr(column_field_kwargs.get('widget', {}), 'can_input') and column_field_kwargs['widget'].can_input:
+                    search_filters[col]['ui-type'] = 'input'
+                # 对于那种配置使用过往记录作为可选值的参数进行处理
+                if hasattr(column_field_kwargs.get('widget', {}), 'conten2choices') and column_field_kwargs['widget'].conten2choices:
+                    # 先从缓存中拿结果
+                    field_contents = None
+                    try:
+                        field_contents = cache.get(self.datamodel.obj.__tablename__ + "_" + col)
+                    except Exception as e:
+                        print(e)
+                    # 缓存没有数据，再从数据库中读取
+                    if not field_contents:
+                        try:
+                            field_contents = db.session.query(getattr(self.datamodel.obj, col)).group_by(getattr(self.datamodel.obj, col)).all()
+                            field_contents = list(set([item[0] for item in field_contents]))
+                            cache.set(self.datamodel.obj.__tablename__ + "_" + col, field_contents,timeout=60 * 60)
+
+                        except Exception as e:
+                            print(e)
+
+                    if field_contents:
+                        search_filters[col]['ui-type'] = 'select'
+                        search_filters[col]['choices']= [[x, x] for x in list(set(field_contents))]
 
             search_filters[col] = self.make_ui_info(search_filters[col])
             # 多选字段在搜索时为单选字段
@@ -786,7 +856,8 @@ class MyappModelRestApi(ModelRestApi):
 
     @expose("/_info", methods=["GET"])
     @merge_response_func(merge_more_info,'more_info')
-    @merge_response_func(merge_import_data, API_IMPORT_DATA_RIS_KEY)
+    @merge_response_func(merge_ops_data, API_IMPORT_DATA_RIS_KEY)
+    @merge_response_func(merge_exist_add_args, API_EXIST_ADD_ARGS_RIS_KEY)
     @merge_response_func(merge_cols_width, API_COLS_WIDTH_RIS_KEY)
     @merge_response_func(merge_base_permissions, API_PERMISSIONS_RIS_KEY)
     @merge_response_func(merge_user_permissions, API_USER_PERMISSIONS_RIS_KEY)
@@ -1185,80 +1256,138 @@ class MyappModelRestApi(ModelRestApi):
             }
             return self.response(200,**back)
 
-    #
-    # @expose("/upload/", methods=["POST"])
-    # # @pysnooper.snoop(watch_explode=('attr'))
-    # def upload(self):
-    #     csv_file = request.files.get('csv_file')  # FileStorage
-    #     # 图片保存至指定路径
-    #     i_path = csv_file.filename
-    #     if os.path.exists(i_path):
-    #         os.remove(i_path)
-    #     csv_file.save(i_path)
-    #     # 读取csv，读取header，按行处理
-    #     import csv
-    #     csv_reader = csv.reader(open(i_path, mode='r', encoding='utf-8-sig'))
-    #     header = None
-    #     result = []
-    #     for line in csv_reader:
-    #         if not header:
-    #             header = line
-    #             continue
-    #         # 判断header里面的字段是否在数据库都有
-    #         for col_name in header:
-    #             # attr = self.datamodel.obj
-    #             if not hasattr(self.datamodel.obj,col_name):
-    #                 flash('csv首行header与数据库字段不对应','warning')
-    #                 back = {
-    #                     "status":1,
-    #                     "result":[],
-    #                     "message":"csv首行header与数据库字段不对应"
-    #                 }
-    #                 return self.response(200,**back)
-    #         data = dict(zip(header, line))
-    #
-    #         try:
-    #             model = self.datamodel.obj(**data)
-    #             self.pre_add(model)
-    #             db.session.add(model)
-    #             self.post_add(model)
-    #             db.session.commit()
-    #             result.append('success')
-    #         except Exception as e:
-    #             print(e)
-    #             result.append('fail')
-    #
-    #     flash('成功导入%s行，失败导入%s行'%(len([x for x in result if x=='success']),len([x for x in result if x=='fail'])), 'warning')
-    #     back = {
-    #         "status": 0,
-    #         "result": result,
-    #         "message": "result为上传成功行，共成功%s"%len([x for x in result if x=='success'])
-    #     }
-    #     return self.response(200,**back)
-    #
-    #
-    # @action("muldelete", __("Delete"), __("Delete all Really?"), "fa-trash", single=False)
-    # # @pysnooper.snoop(watch_explode=('items'))
-    # def muldelete(self, items):
-    #     if not items:
-    #         abort(404)
-    #     success=[]
-    #     fail=[]
-    #     for item in items:
-    #         try:
-    #             self.pre_delete(item)
-    #             db.session.delete(item)
-    #             success.append(item.to_json())
-    #         except Exception as e:
-    #             flash(str(e), "danger")
-    #             fail.append(item.to_json())
-    #     db.session.commit()
-    #     return json.dumps(
-    #         {
-    #             "success":success,
-    #             "fail":fail
-    #         },indent=4,ensure_ascii=False
-    #     )
+
+
+    @expose("/download_template/", methods=["GET"])
+    def download_template(self):
+
+        demostr=','.join(list(self.add_columns))+"\n"+','.join(['xx' for x in list(self.add_columns)])
+
+        file_name = self.datamodel.obj.__tablename__
+        csv_file='%s.csv'%file_name
+        if os.path.exists(csv_file):
+            os.remove(csv_file)
+        file = open(csv_file,mode='w',encoding='utf-8-sig')
+        file.writelines(demostr)
+        file.close()
+        csv_file = os.path.abspath(csv_file)
+        response = self.csv_response(csv_file,file_name=file_name)
+        return response
+
+    @expose("/upload/", methods=["POST"])
+    def upload(self):
+        csv_file = request.files.get('csv_file')  # FileStorage
+        # 文件保存至指定路径
+        i_path = csv_file.filename
+        if os.path.exists(i_path):
+            os.remove(i_path)
+        csv_file.save(i_path)
+        # 读取csv，读取header，按行处理
+        import csv
+        csv_reader = csv.reader(open(i_path, mode='r', encoding='utf-8-sig'))
+        header = None
+        result = []
+        for line in csv_reader:
+            if not header:
+                header = line
+                continue
+            # 判断header里面的字段是否在数据库都有
+            for col_name in header:
+                # attr = self.datamodel.obj
+                if not hasattr(self.datamodel.obj,col_name):
+                    flash('csv首行header与数据库字段不对应','warning')
+                    back = {
+                        "status":1,
+                        "result":[],
+                        "message":"csv首行header与数据库字段不对应"
+                    }
+                    return self.response(200,**back)
+
+            # 个数不对的去掉
+            if len(line)!=len(header):
+                continue
+
+            # 全是空值的去掉
+            ll = [l.strip() for l in line if l.strip()]
+            if not ll:
+                continue
+
+            data = dict(zip(header, line))
+
+            try:
+                if self.pre_upload:
+                    data = self.pre_upload(data)
+                model = self.datamodel.obj(**data)
+                self.pre_add(model)
+                db.session.add(model)
+                self.post_add(model)
+                db.session.commit()
+                result.append('success')
+            except Exception as e:
+                db.session.rollback()
+                print(e)
+                result.append('fail')
+
+        flash('成功导入%s行，失败导入%s行'%(len([x for x in result if x=='success']),len([x for x in result if x=='fail'])), 'warning')
+        back = {
+            "status": 0,
+            "message": "result为上传成功行，共成功%s" % len([x for x in result if x == 'success']),
+            "result": result
+        }
+        return self.response(200,**back)
+
+
+    @expose("/download/", methods=["GET"])
+    # @pysnooper.snoop()
+    def download(self):
+        import pandas
+        sqllchemy_uri = conf.get('SQLALCHEMY_DATABASE_URI','')
+        bind_key = getattr(self.datamodel.obj,'__bind_key__',None)
+        if bind_key:
+            bind_sqllchemy_uri = conf['SQLALCHEMY_BINDS'].get(bind_key,'')
+            if bind_sqllchemy_uri:
+                sqllchemy_uri=bind_sqllchemy_uri
+
+        import sqlalchemy.engine.url as url
+        uri = url.make_url(sqllchemy_uri)
+        sql_engine = create_engine(uri)
+        table_name = self.datamodel.obj.__tablename__
+        # sql = 'select `%s` from %s' % ('`,`'.join(self.show_columns), table_name)
+        sql = 'select * from %s' % (table_name)
+        print(sql)
+        results = pandas.read_sql_query(sql, sql_engine)
+
+        file_path = '%s.csv' % table_name
+        csv_file = os.path.abspath(file_path)
+        if os.path.exists(csv_file):
+            os.remove(csv_file)
+        results.to_csv(csv_file, index=False, sep=",",encoding='utf-8-sig')  # index 是第几行的表示
+        response = self.csv_response(csv_file, file_name=table_name)
+        return response
+
+
+    @action("muldelete", __("Delete"), __("Delete all Really?"), "fa-trash", single=False)
+    # @pysnooper.snoop(watch_explode=('items'))
+    def muldelete(self, items):
+        if not items:
+            abort(404)
+        success=[]
+        fail=[]
+        for item in items:
+            try:
+                self.pre_delete(item)
+                db.session.delete(item)
+                success.append(item.to_json())
+            except Exception as e:
+                flash(str(e), "danger")
+                fail.append(item.to_json())
+        db.session.commit()
+        return json.dumps(
+            {
+                "success":success,
+                "fail":fail
+            },indent=4,ensure_ascii=False
+        )
 
     """
     ------------------------------------------------
@@ -1432,7 +1561,7 @@ class MyappModelRestApi(ModelRestApi):
             if choices:
                 values=[]
                 for choice in choices:
-                    if len(choice)==2:
+                    if choice and len(choice)==2:
                         values.append({
                             "id":choice[0],
                             "value":choice[1]
@@ -1442,11 +1571,13 @@ class MyappModelRestApi(ModelRestApi):
                 ret['ui-type']='select2' if 'SelectMultiple' in ret['type'] else 'select'
 
         # 字符串
-        if ret.get('type','') in ['String',]:
-            if ret.get('widget','BS3Text')=='BS3Text':
-                ret['ui-type'] = 'input'
-            else:
-                ret['ui-type'] = 'textArea'
+        if ret.get('ui-type','') not in ['list','datePicker']:  # list,datePicker 类型，保持原样
+            if ret.get('type','') in ['String',]:
+                if ret.get('widget','BS3Text')=='BS3Text':
+                    ret['ui-type'] = 'input'
+                else:
+                    ret['ui-type'] = 'textArea'
+
         # 长文本输入
         if 'text' in ret.get('type','').lower():
             ret['ui-type'] = 'textArea'
@@ -1526,16 +1657,24 @@ class MyappModelRestApi(ModelRestApi):
             ret["remember"] = False
         ret["label"] = _(self.label_columns.get(field.name, ""))
         ret["description"] = _(self.description_columns.get(field.name, ""))
+        if field.validate and isinstance(field.validate, list):
+            ret["validators"] = [v for v in field.validate]
+        elif field.validate:
+            ret["validators"] = [field.validate]
+        else:
+            ret["validators"]=[]
+
         # Handles related fields
         if isinstance(field, Related) or isinstance(field, RelatedList):
             ret["count"], ret["values"] = self._get_list_related_field(
                 field, filter_rel_field, page=page, page_size=page_size
             )
+            ret["validators"].append(validators.DataRequired())
 
-        if field.validate and isinstance(field.validate, list):
-            ret["validators"] = [v for v in field.validate]
-        elif field.validate:
-            ret["validators"] = [field.validate]
+
+
+        # 如果是外键，都加必填
+        # if
 
         # 对于非数据库中字段使用字段信息描述类型
         ret["type"] = field.__class__.__name__ if 'type' not in ret else ret["type"]
@@ -1556,23 +1695,54 @@ class MyappModelRestApi(ModelRestApi):
                 ret['description'] = self.description_columns.get(field.name,column_field_kwargs.get('description', ''))
                 ret['label'] = self.label_columns.get(field.name,column_field_kwargs.get('label', ''))
                 ret['default'] = column_field_kwargs.get('default', '')
-                ret['validators'] = column_field_kwargs.get('validators', [])
+                ret['validators'] = column_field_kwargs.get('validators', ret["validators"])
                 ret['choices'] = column_field_kwargs.get('choices', [])
                 if 'widget' in column_field_kwargs:
                     ret['widget']=column_field_kwargs['widget'].__class__.__name__.replace('Widget','').replace('Field','').replace('My','')
-                    ret['disable']=column_field_kwargs['widget'].readonly if hasattr(column_field_kwargs['widget'],'readonly') else False
-                    # if hasattr(column_field_kwargs['widget'],'can_input'):
-                    #     print(field.name,column_field_kwargs['widget'].can_input)
-                    ret['ui-type'] = 'input-select' if hasattr(column_field_kwargs['widget'],'can_input') and column_field_kwargs['widget'].can_input else False
-                    # 对于那种配置使用过往记录作为可选值的参数进行处理
+                    # 处理禁止编辑
+                    if hasattr(column_field_kwargs['widget'], 'readonly') and column_field_kwargs['widget'].readonly:
+                        ret['disable']=True
+                    # 处理重新拉取info
+                    if hasattr(column_field_kwargs['widget'], 'retry_info') and column_field_kwargs['widget'].retry_info:
+                        ret['retry_info'] = True
+
+                    # 处理选填类型
+                    if hasattr(column_field_kwargs['widget'], 'can_input') and column_field_kwargs['widget'].can_input:
+                        ret['ui-type'] = 'input-select'
+
+                    # 处理时间类型
+                    if hasattr(column_field_kwargs['widget'], 'is_date') and column_field_kwargs['widget'].is_date:
+                        ret['ui-type'] = 'datePicker'
+                    # 处理时间类型
+                    if hasattr(column_field_kwargs['widget'], 'is_date_range') and column_field_kwargs['widget'].is_date_range:
+                        ret['ui-type'] = 'rangePicker'
+
+                    # 处理扩展字段，一个字段存储一个list的值
+                    if hasattr(column_field_kwargs['widget'], 'expand_filed') and column_field_kwargs['widget'].expand_filed:
+                        print(field.name)
+                        ret['ui-type'] = 'list'
+                        ret["info"]=self.columnsfield2info(column_field_kwargs['widget'].expand_filed)
+
+                    # 处理内容自动填充可取值，对于那种配置使用过往记录作为可选值的参数进行处理
                     if hasattr(column_field_kwargs['widget'], 'conten2choices') and column_field_kwargs['widget'].conten2choices:
+                        # 先从缓存中拿结果
+                        field_contents=None
                         try:
-                            field_contents = db.session.query(getattr(self.datamodel.obj,field.name)).group_by(getattr(self.datamodel.obj,field.name)).all()
-                            field_contents = [item[0] for item in field_contents]
-                            if field_contents:
-                                ret['choices']=[[x,x] for x in list(set(field_contents))]
+                            field_contents = cache.get(self.datamodel.obj.__tablename__+"_"+field.name)
                         except Exception as e:
                             print(e)
+                        # 缓存没有数据，再从数据库中读取
+                        if not field_contents:
+                            try:
+                                field_contents = db.session.query(getattr(self.datamodel.obj,field.name)).group_by(getattr(self.datamodel.obj,field.name)).all()
+                                field_contents = list(set([item[0] for item in field_contents]))
+                                cache.set(self.datamodel.obj.__tablename__+"_"+field.name, field_contents, timeout=60 * 60)
+
+                            except Exception as e:
+                                print(e)
+
+                        if field_contents:
+                            ret['choices'] = [[x, x] for x in list(set(field_contents))]
 
 
         # 补充数据库model中定义的是否必填

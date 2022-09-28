@@ -9,7 +9,6 @@ import uuid
 import re
 from kfp import compiler
 from sqlalchemy.exc import InvalidRequestError
-# 将model添加成视图，并控制在前端的显示
 from myapp.models.model_job import Repository,Images,Job_Template,Task,Pipeline,Workflow,Tfjob,Xgbjob,RunHistory,Pytorchjob
 from myapp.models.model_team import Project,Project_User
 from flask_appbuilder.actions import action
@@ -57,7 +56,7 @@ from flask import (
     url_for,
 )
 from myapp import security_manager
-import kfp    # 使用自定义的就要把pip安装的删除了
+
 from werkzeug.datastructures import FileStorage
 from .base import (
     api,
@@ -86,18 +85,38 @@ class Task_ModelView_Base():
     datamodel = SQLAInterface(Task)
     check_redirect_list_url = '/pipeline_modelview/edit/'
     help_url = conf.get('HELP_URL', {}).get(datamodel.obj.__tablename__, '') if datamodel else ''
-    list_columns = ['name','label','job_template_url','volume_mount','debug','run','clear','log']
-    show_columns = ['name', 'label','pipeline', 'job_template','volume_mount','command','overwrite_entrypoint','working_dir', 'args_html','resource_memory','resource_cpu','resource_gpu','timeout','retry','created_by','changed_by','created_on','changed_on','monitoring_html']
-    add_columns = ['job_template', 'name', 'label', 'pipeline', 'volume_mount','command','working_dir']
+    list_columns =['name', 'label','pipeline', 'job_template','volume_mount','resource_memory','resource_cpu','resource_gpu','timeout','retry','created_on','changed_on','monitoring','expand']
+    # list_columns = ['name','label','job_template_url','volume_mount','debug','run','clear','log']
+    cols_width={
+        "name":{"type": "ellip2", "width": 300},
+        "label":{"type": "ellip2", "width": 300},
+        "pipeline": {"type": "ellip2", "width": 300},
+        "job_template":{"type": "ellip2", "width": 300},
+        "volume_mount":{"type": "ellip2", "width": 600},
+        "args":{"type": "ellip2", "width": 400},
+        "resource_memory": {"type": "ellip2", "width": 100},
+        "resource_cpu": {"type": "ellip2", "width": 100},
+        "resource_gpu": {"type": "ellip2", "width": 100},
+        "timeout": {"type": "ellip2", "width": 100},
+        "retry": {"type": "ellip2", "width": 100},
+        "created_on": {"type": "ellip2", "width": 300},
+        "changed_on": {"type": "ellip2", "width": 300},
+        "monitoring": {"type": "ellip2", "width": 300},
+        "expand": {"type": "ellip2", "width": 300},
+    }
+    show_columns = ['name', 'label','pipeline', 'job_template','volume_mount','command','overwrite_entrypoint','working_dir', 'args_html','resource_memory','resource_cpu','resource_gpu','timeout','retry','skip','created_by','changed_by','created_on','changed_on','monitoring_html']
+    add_columns = ['job_template', 'name', 'label', 'pipeline', 'volume_mount','command','working_dir','skip']
     edit_columns = add_columns
     base_order = ('id','desc')
     order_columns = ['id']
+    search_columns = ['pipeline']
+
     conv = GeneralModelConverter(datamodel)
 
     add_form_extra_fields = {
         "args": StringField(
             _(datamodel.obj.lab('args')),
-            widget=MyBS3TextAreaFieldWidget(rows=10),  # 传给widget函数的是外层的field对象，以及widget函数的参数
+            widget=MyBS3TextAreaFieldWidget(rows=10),
         ),
         "pipeline": QuerySelectField(
             datamodel.obj.lab('pipeline'),
@@ -114,7 +133,7 @@ class Task_ModelView_Base():
 
         "name":StringField(
             label=_(datamodel.obj.lab('name')),
-            description='英文名(字母、数字、- 组成)，最长50个字符',
+            description='英文名(小写字母、数字、- 组成)，最长50个字符',
             widget=BS3TextFieldWidget(),
             validators=[Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"), Length(1, 54),DataRequired()]
         ),
@@ -138,7 +157,7 @@ class Task_ModelView_Base():
         "command":StringField(
             label = _(datamodel.obj.lab('command')),
             description='启动命令',
-            widget=MyBS3TextAreaFieldWidget(rows=3)
+            widget=BS3TextFieldWidget()
         ),
         "overwrite_entrypoint":BooleanField(
             label = _(datamodel.obj.lab('overwrite_entrypoint')),
@@ -319,6 +338,13 @@ class Task_ModelView_Base():
         #         item.volume_mount += ","+item.job_template.volume_mount
         #     else:
         #         item.volume_mount = item.job_template.volume_mount
+
+        if item.volume_mount and ':' not in item.volume_mount:
+            item.volume_mount = self.src_item_json.get('volume_mount','')
+
+        if item.volume_mount:
+            item.volume_mount = ','.join([x.strip() for x in item.volume_mount.split(',') if x.strip()])
+
         if item.outputs:
             core.validate_json(item.outputs)
             item.outputs = json.dumps(json.loads(item.outputs),indent=4,ensure_ascii=False)
@@ -459,6 +485,10 @@ class Task_ModelView_Base():
         for global_env_key in platform_global_envs:
             if global_env_key not in task_env:
                 task_env += global_env_key + '=' + platform_global_envs[global_env_key] + "\n"
+        new_args=[]
+        if args:
+            for arg in args:
+                new_args.append(template_str(arg))
 
         volume_mount = task.volume_mount
 
@@ -472,7 +502,7 @@ class Task_ModelView_Base():
                              name=pod_name,
                              labels={"pipeline": task.pipeline.name, 'task': task.name, 'user': g.user.username,'run-id': run_id,'pod-type':"task"},
                              command=command,
-                             args=args,
+                             args=new_args,
                              volume_mount=volume_mount,
                              working_dir=working_dir,
                              node_selector=task.get_node_selector(), resource_memory=resource_memory,
@@ -491,8 +521,11 @@ class Task_ModelView_Base():
         task = db.session.query(Task).filter_by(id=task_id).first()
         if task.job_template.name != conf.get('CUSTOMIZE_JOB'):
             if not g.user.is_admin() and task.job_template.created_by.username!=g.user.username:
-                flash('仅管理员或当前任务模板创建者，可启动debug模式', 'warning')
-                return redirect('/pipeline_modelview/web/%s' % str(task.pipeline.id))
+                message='仅管理员或当前任务模板创建者，可启动debug模式'
+                flash(message, 'warning')
+                return self.response(400,**{"status":1,"result":{},"message":message})
+
+                # return redirect('/pipeline_modelview/web/%s' % str(task.pipeline.id))
 
 
         from myapp.utils.py.py_k8s import K8s
@@ -526,20 +559,28 @@ class Task_ModelView_Base():
                 args=None
             )
 
-        try_num=5
+        try_num=30
+        message = '启动时间过长，一分钟后刷新此页面'
         while(try_num>0):
             pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
             # print(pod)
             if pod:
                 pod = pod[0]
             # 有历史非运行态，直接删除
-            if pod and pod['status'] == 'Running':
-                break
+            if pod:
+                if pod['status'] == 'Running':
+                    break
+                else:
+                    try:
+                        message = '启动时间过长，一分钟后刷新此页面'+", status:"+pod['status']+", message:"+json.dumps(pod['status_more']['conditions'],indent=4,ensure_ascii=False)
+                    except Exception as e:
+                        print(e)
             try_num=try_num-1
             time.sleep(2)
         if try_num==0:
-            flash('启动时间过长，一分钟后重试','warning')
-            return redirect('/pipeline_modelview/web/%s'%str(task.pipeline.id))
+            flash(message,'warning')
+            return self.response(400, **{"status": 1, "result": {}, "message": message})
+            # return redirect('/pipeline_modelview/web/%s'%str(task.pipeline.id))
 
 
         return redirect("/myapp/web/debug/%s/%s/%s/%s"%(task.pipeline.project.cluster['NAME'],namespace,pod_name,pod_name))
@@ -572,8 +613,10 @@ class Task_ModelView_Base():
                 pod = k8s_client.get_pods(namespace=namespace, pod_name=pod_name)
                 check_date = datetime.datetime.now()
                 if (check_date-delete_time).seconds>60:
-                    flash("超时，请稍后重试",category='warning')
-                    return redirect('/pipeline_modelview/web/%s' % str(task.pipeline.id))
+                    message="超时，请稍后重试"
+                    flash(message,category='warning')
+                    return self.response(400, **{"status": 1, "result": {}, "message": message})
+                    # return redirect('/pipeline_modelview/web/%s' % str(task.pipeline.id))
 
 
 
@@ -634,8 +677,10 @@ class Task_ModelView_Base():
             try_num = try_num - 1
             time.sleep(2)
         if try_num == 0:
-            flash('启动时间过长，一分钟后重试', 'warning')
-            return redirect('/pipeline_modelview/web/%s' % str(task.pipeline.id))
+            message = '启动时间过长，一分钟后重试'
+            flash(message, 'warning')
+            return self.response(400, **{"status": 1, "result": {}, "message": message})
+            # return redirect('/pipeline_modelview/web/%s' % str(task.pipeline.id))
 
         return redirect("/myapp/web/log/%s/%s/%s" % (task.pipeline.project.cluster['NAME'],namespace, pod_name))
 
@@ -707,7 +752,6 @@ class Task_ModelView_Base():
 class Task_ModelView(Task_ModelView_Base,CompactCRUDMixin,MyappModelView):
     datamodel = SQLAInterface(Task)
 
-# appbuilder.add_view(Task_ModelView,"Task",icon = 'fa-address-book-o',category = 'job',category_icon = 'fa-envelope')
 appbuilder.add_view_no_menu(Task_ModelView)
 
 
@@ -717,9 +761,9 @@ class Task_ModelView_Api(Task_ModelView_Base,MyappModelRestApi):
     route_base = '/task_modelview/api'
     # list_columns = ['name','label','job_template_url','volume_mount','debug']
     list_columns =['name', 'label','pipeline', 'job_template','volume_mount','node_selector','command','overwrite_entrypoint','working_dir', 'args','resource_memory','resource_cpu','resource_gpu','timeout','retry','created_by','changed_by','created_on','changed_on','monitoring','expand']
-    add_columns = ['name','label','job_template','pipeline','working_dir','command','args','volume_mount','node_selector','resource_memory','resource_cpu','resource_gpu','timeout','retry','expand']
+    add_columns = ['name','label','job_template','pipeline','working_dir','command','args','volume_mount','node_selector','resource_memory','resource_cpu','resource_gpu','timeout','retry','skip','expand']
     edit_columns = add_columns
-    show_columns = ['name', 'label','pipeline', 'job_template','volume_mount','node_selector','command','overwrite_entrypoint','working_dir', 'args','resource_memory','resource_cpu','resource_gpu','timeout','retry','created_by','changed_by','created_on','changed_on','monitoring','expand']
+    show_columns = ['name', 'label','pipeline', 'job_template','volume_mount','node_selector','command','overwrite_entrypoint','working_dir', 'args','resource_memory','resource_cpu','resource_gpu','timeout','retry','skip','created_by','changed_by','created_on','changed_on','monitoring','expand']
 
 
 appbuilder.add_api(Task_ModelView_Api)

@@ -3,7 +3,6 @@ from flask_babel import lazy_gettext as _
 import re
 from myapp.utils import core
 
-# 定义model
 class MyappModelBase():
 
     label_columns={
@@ -62,7 +61,7 @@ class MyappModelBase():
         "final_status":"最终状态",
         "pipeline": "任务流",
         "pipeline_url": "任务流",
-        "us_pipeline_url": "任务流",
+        "etl_pipeline_url": "任务流",
         "service_pipeline_url": "推理编排",
         "run_id": "kfp运行id",
         "run_time": "kfp运行时间",
@@ -201,7 +200,7 @@ class MyappModelBase():
         "config":"配置",
         "config_html": "配置",
         "app":"产品",
-        "field": "数据域",
+        "field": "领域",
         "cluster": "集群",
         "db_name":"数据库",
         "database":"数据库",
@@ -217,20 +216,61 @@ class MyappModelBase():
         "remark":"备注",
         "ttl": "保留时长",
         "sql": "sql",
-        "us_task_id": "us任务id",
+        "sql_html": "sql",
         "primary_part_col_name":"主分区列",
-
+        "app_group":"应用组",
+        "sql_demo":"sql示例",
+        "create_table_ddl":"建表sql",
+        "insert_sql": "数据导入sql",
+        "metric_type": "指标类型",
+        "metric_data_type":"指标数据类型",
+        "metric_dim": "指标维度",
+        "metric_level": "指标级别",
+        "metric_responsible":"指标责任人",
+        "caliber":"口径",
+        "is_partition":"是否分区列",
+        "partition_type":"分区类型",
+        "c_org_fullname":"组织架构",
+        "lifecycle":"当前生命周期(天)",
+        "rec_lifecycle":"推荐生命周期(天)",
+        "storage_cost":"存储成本(元/月)",
+        "visits_seven":"7日访问次数",
+        "recent_visit":"最近访问日期",
+        "partition_start":"分区开始时间",
+        "partition_end":"分区结束时间",
+        "visits_thirty":"30天访问次数",
+        "product_name":"产品名",
+        "product_id":"产品id",
+        "product_desc":"产品描述",
+        "active":"激活",
+        "job_worker_image":"工作镜像",
+        "job_worker_command": "启动命令",
+        "source_type":"数据源类型",
+        "priority":"优先级",
+        "owner": "责任人",
+        "industry":"行业",
+		"skip":"跳过",
+        "etl_pipeline": "任务流",
+        "etl_pipeline_id": "任务流id",
+        "etl_task": "任务",
+        "etl_task_id": "任务id",
         "access":"接入",
+        "inference_config": "推理配置",
+        "file_type":"文件类型",
         "responsible":"责任人",
-
+        "cycle_unit":"周期单位",
+        "task_type":"任务类型",
+        "help":"帮助",
         "creator": "创建者",
         "created_by": "创建者",
         "changed_by": "修改者",
         "created_on": "创建时间",
         "create_time": "创建时间",
+        "update_time":"更新时间",
         "changed_on": "修改时间",
         "change_time":"更新时间",
-        "modified": "修改时间"
+        "modified": "修改时间",
+		"cronjob_start_time":"补录起点"
     }
 
     # 获取列的中文显示
@@ -241,14 +281,12 @@ class MyappModelBase():
         return _(re.sub("[._]", " ", col).title())
 
 
-
-    # 获取node选择器
     def get_default_node_selector(self,node_selector,resource_gpu,model_type):
-        # 先使用项目中定义的选择器
+        # prefer already defined selectors
         if not node_selector:
             node_selector=''
 
-        # 不使用用户的填写，完全平台决定
+        # completely determined by the platform
         if core.get_gpu(resource_gpu)[0]:
             node_selector = node_selector.replace('cpu=true', 'gpu=true') + ",gpu=true,%s=true"%model_type
         else:

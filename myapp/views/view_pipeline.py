@@ -7,9 +7,10 @@ from flask_babel import gettext as __
 from flask_babel import lazy_gettext as _
 import uuid
 import re
+import urllib.parse
 from kfp import compiler
 from sqlalchemy.exc import InvalidRequestError
-# 将model添加成视图，并控制在前端的显示
+
 from myapp.models.model_job import Repository,Images,Job_Template,Task,Pipeline,Workflow,Tfjob,Xgbjob,RunHistory,Pytorchjob
 from myapp.models.model_team import Project,Project_User
 from myapp.views.view_team import Project_Join_Filter
@@ -29,7 +30,7 @@ from jinja2 import Environment, BaseLoader, DebugUndefined, StrictUndefined
 import os,sys
 from wtforms.validators import DataRequired, Length, NumberRange, Optional,Regexp
 from myapp.forms import JsonValidator
-from myapp.views.view_task import Task_ModelView
+from myapp.views.view_task import Task_ModelView,Task_ModelView_Api
 from sqlalchemy import and_, or_, select
 from myapp.exceptions import MyappException
 from wtforms import BooleanField, IntegerField,StringField, SelectField,FloatField,DateField,DateTimeField,SelectMultipleField,FormField,FieldList
@@ -64,9 +65,9 @@ from flask import (
 )
 from myapp import security_manager
 from myapp.views.view_team import filter_join_org_project
-import kfp    # 使用自定义的就要把pip安装的删除了
+import kfp  
 from werkzeug.datastructures import FileStorage
-from kubernetes import client as k8s_client
+from kubernetes import client
 from .base import (
     api,
     BaseMyappView,
@@ -112,7 +113,7 @@ class Pipeline_Filter(MyappFilter):
 
 from sqlalchemy.exc import InvalidRequestError,OperationalError
 
-# 将定义pipeline的流程
+# 将dag 转为argo pipeline yaml
 # @pysnooper.snoop(watch_explode=())
 def dag_to_pipeline(pipeline,dbsession,**kwargs):
     if not pipeline.id:
@@ -331,41 +332,27 @@ def dag_to_pipeline(pipeline,dbsession,**kwargs):
         # 添加用户自定义挂载
         task.volume_mount=task.volume_mount.strip() if task.volume_mount else ''
         if task.volume_mount:
-            volume_mounts = re.split(',|;',task.volume_mount)
-            for volume_mount in volume_mounts:
-                volume,mount = volume_mount.split(":")[0].strip(),volume_mount.split(":")[1].strip()
-                if "(pvc)" in volume:
-                    pvc_name = volume.replace('(pvc)','').replace(' ','')
-                    temps = re.split('_|\.|/', pvc_name)
-                    temps = [temp for temp in temps if temp]
-                    volumn_name = ('-'.join(temps))[:60].lower().strip('-')
-                    ops=ops.add_volume(k8s_client.V1Volume(name=volumn_name,
-                                                           persistent_volume_claim=k8s_client.V1PersistentVolumeClaimVolumeSource(claim_name=pvc_name)))\
-                        .add_volume_mount(k8s_client.V1VolumeMount(mount_path=os.path.join(mount,task.pipeline.created_by.username), name=volumn_name,sub_path=task.pipeline.created_by.username))
-                if "(hostpath)" in volume:
-                    hostpath_name = volume.replace('(hostpath)', '').replace(' ', '')
-                    temps = re.split('_|\.|/', hostpath_name)
-                    temps = [temp for temp in temps if temp]
-                    volumn_name = ('-'.join(temps))[:60].lower().strip('-')
+            try:
+                k8s_volumes,k8s_volume_mounts = py_k8s.K8s.get_volume_mounts(task.volume_mount,pipeline.created_by.username)
+                for volume in k8s_volumes:
+                    claim_name = volume.get('persistentVolumeClaim',{}).get('claimName',None)
+                    hostpath = volume.get('hostPath',{}).get('path',None)
+                    configmap_name = volume.get('configMap',{}).get('name',None)
+                    memory_size=volume.get('emptyDir',{}).get('sizeLimit',None) if volume.get('emptyDir',{}).get('medium','')=='Memory' else None
+                    ops = ops.add_volume(client.V1Volume(
+                        name=volume['name'],
+                        persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=claim_name) if claim_name else None,
+                        host_path=client.V1HostPathVolumeSource(path=hostpath) if hostpath else None,
+                        config_map=client.V1ConfigMapVolumeSource(name=configmap_name) if configmap_name else None,
+                        empty_dir=client.V1EmptyDirVolumeSource(medium='Memory', size_limit=memory_size) if memory_size else None
+                    ))
 
-                    ops = ops.add_volume(k8s_client.V1Volume(name=volumn_name,
-                                                             host_path=k8s_client.V1HostPathVolumeSource(path=hostpath_name))) \
-                        .add_volume_mount(k8s_client.V1VolumeMount(mount_path=mount, name=volumn_name))
-                if "(configmap)" in volume:
-                    configmap_name = volume.replace('(configmap)', '').replace(' ', '')
-                    temps = re.split('_|\.|/', configmap_name)
-                    temps = [temp for temp in temps if temp]
-                    volumn_name = ('-'.join(temps))[:60].lower().strip('-')
-
-                    ops = ops.add_volume(k8s_client.V1Volume(name=volumn_name,
-                                                             config_map=k8s_client.V1ConfigMapVolumeSource(name=configmap_name))) \
-                        .add_volume_mount(k8s_client.V1VolumeMount(mount_path=mount, name=volumn_name))
-
-                if "(memory)" in volume:
-                    memory_size = volume.replace('(memory)', '').replace(' ', '').lower().replace('g','')
-                    volumn_name = ('memory-%s'%memory_size)[:60].lower().strip('-')
-                    ops = ops.add_volume(k8s_client.V1Volume(name=volumn_name,empty_dir=k8s_client.V1EmptyDirVolumeSource(medium='Memory',size_limit='%sGi'%memory_size)))\
-                        .add_volume_mount(k8s_client.V1VolumeMount(mount_path=mount, name=volumn_name))
+                for mount in k8s_volume_mounts:
+                    mountPath = mount.get('mountPath',None)
+                    subPath = mount.get('subPath',None)
+                    ops = ops.add_volume_mount(client.V1VolumeMount(mount_path=mountPath, name=mount.get('name',''),sub_path=subPath))
+            except Exception as e:
+                print(e)
 
 
 
@@ -375,17 +362,14 @@ def dag_to_pipeline(pipeline,dbsession,**kwargs):
             if type(upstream_tasks)==dict:
                 upstream_tasks=list(upstream_tasks.keys())
             if type(upstream_tasks)==str:
-                upstream_tasks = upstream_tasks.split(',;')
+                upstream_tasks = re.split(',|;',upstream_tasks)
+                # upstream_tasks = upstream_tasks.split(',;')
             if type(upstream_tasks)!=list:
                 raise MyappException('%s upstream is not valid'%task_name)
-            for upstream_task in upstream_tasks:   # 可能存在已删除的upstream_task，这个时候是不添加的
-                add_upstream=False
-                for task1_name in all_ops:
-                    if task1_name==upstream_task:
-                        ops.after(all_ops[task1_name])  # 配置任务顺序
-                        add_upstream=True
-                        break
-                if not add_upstream:
+            for upstream_task in upstream_tasks:   # 可能存在已删除的upstream_task
+                if upstream_task in all_ops:
+                    ops.after(all_ops[upstream_task])  # 配置任务顺序
+                else:
                     raise MyappException('%s upstream %s is not exist' % (task_name,upstream_task))
 
         # 添加node selector
@@ -416,13 +400,13 @@ def dag_to_pipeline(pipeline,dbsession,**kwargs):
 
 
         # 添加亲密度控制
-        affinity = k8s_client.V1Affinity(
-            pod_anti_affinity=k8s_client.V1PodAntiAffinity(
+        affinity = client.V1Affinity(
+            pod_anti_affinity=client.V1PodAntiAffinity(
                 preferred_during_scheduling_ignored_during_execution=[
-                    k8s_client.V1WeightedPodAffinityTerm(
+                    client.V1WeightedPodAffinityTerm(
                         weight=80,
-                        pod_affinity_term=k8s_client.V1PodAffinityTerm(
-                            label_selector=k8s_client.V1LabelSelector(
+                        pod_affinity_term=client.V1PodAffinityTerm(
+                            label_selector=client.V1LabelSelector(
                                 match_labels={
                                     # 'job-template':task.job_template.name,
                                     "pipeline-id":str(pipeline.id)
@@ -471,6 +455,10 @@ def dag_to_pipeline(pipeline,dbsession,**kwargs):
             if resource_gpu and core.get_gpu(resource_gpu)[0]>0:
                 ops.set_gpu_limit(core.get_gpu(resource_gpu)[0])
 
+        if task.skip:
+            ops.command = ["echo", "skip"]
+            ops.arguments=None
+            ops._container.resources=None
 
         all_ops[task_name]=ops
 
@@ -492,7 +480,7 @@ def dag_to_pipeline(pipeline,dbsession,**kwargs):
             hubsecret = task_temp.job_template.images.repository.hubsecret
             if hubsecret not in hubsecret_list:
                 hubsecret_list.append(hubsecret)
-                pipeline_conf.image_pull_secrets.append(k8s_client.V1LocalObjectReference(name=hubsecret))
+                pipeline_conf.image_pull_secrets.append(client.V1LocalObjectReference(name=hubsecret))
 
 
         # # 配置host 在kfp中并不生效
@@ -545,31 +533,31 @@ def upload_pipeline(pipeline_file,pipeline_name,kfp_host,pipeline_argo_id):
     file = open(pipeline_name + '.yaml', mode='wb')
     file.write(bytes(pipeline_file,encoding='utf-8'))
     file.close()
-    client = kfp.Client(kfp_host)   # pipeline.project.cluster.get('KFP_HOST')
+    kfp_client = kfp.Client(kfp_host)   # pipeline.project.cluster.get('KFP_HOST')
     pipeline_argo = None
     if pipeline_argo_id:
         try:
-            pipeline_argo = client.get_pipeline(pipeline_argo_id)
+            pipeline_argo = kfp_client.get_pipeline(pipeline_argo_id)
         except Exception as e:
             logging.error(e)
 
     if pipeline_argo:
-        pipeline_argo_version = client.upload_pipeline_version(pipeline_package_path=pipeline_name + '.yaml', pipeline_version_name=pipeline_name+"_version_at_"+datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),pipeline_id=pipeline_argo.id)
+        pipeline_argo_version = kfp_client.upload_pipeline_version(pipeline_package_path=pipeline_name + '.yaml', pipeline_version_name=pipeline_name+"_version_at_"+datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),pipeline_id=pipeline_argo.id)
         time.sleep(1)   # 因为创建是异步的，要等k8s反应，所以有时延
         return pipeline_argo.id,pipeline_argo_version.id
     else:
         exist_pipeline_argo_id = None
         try:
-            exist_pipeline_argo_id = client.get_pipeline_id(pipeline_name)
+            exist_pipeline_argo_id = kfp_client.get_pipeline_id(pipeline_name)
         except Exception as e:
             logging.error(e)
 
         if exist_pipeline_argo_id:
-            pipeline_argo_version = client.upload_pipeline_version(pipeline_package_path=pipeline_name + '.yaml',pipeline_version_name=pipeline_name + "_version_at_" + datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),pipeline_id=exist_pipeline_argo_id)
+            pipeline_argo_version = kfp_client.upload_pipeline_version(pipeline_package_path=pipeline_name + '.yaml',pipeline_version_name=pipeline_name + "_version_at_" + datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),pipeline_id=exist_pipeline_argo_id)
             time.sleep(1)
             return exist_pipeline_argo_id,pipeline_argo_version.id
         else:
-            pipeline_argo = client.upload_pipeline(pipeline_name + '.yaml', pipeline_name=pipeline_name)
+            pipeline_argo = kfp_client.upload_pipeline(pipeline_name + '.yaml', pipeline_name=pipeline_name)
             time.sleep(1)
             return pipeline_argo.id,pipeline_argo.default_version.id
 
@@ -583,22 +571,22 @@ def run_pipeline(pipeline_file,pipeline_name,kfp_host,pipeline_argo_id,pipeline_
     if not pipeline_argo_id or not pipeline_argo_version_id:
         pipeline_argo_id,pipeline_argo_version_id = upload_pipeline(pipeline_file,pipeline_name,kfp_host,pipeline_argo_id)   # 必须上传新版本
 
-    client = kfp.Client(kfp_host)
+    kfp_client = kfp.Client(kfp_host)
     # 先创建一个实验，在在这个实验中运行指定pipeline
     experiment=None
     try:
-        experiment = client.get_experiment(experiment_name=pipeline_name)
+        experiment = kfp_client.get_experiment(experiment_name=pipeline_name)
     except Exception as e:
         logging.error(e)
     if not experiment:
         try:
-            experiment = client.create_experiment(name=pipeline_name,description=pipeline_name)  # 现在要求describe不能是中文了
+            experiment = kfp_client.create_experiment(name=pipeline_name,description=pipeline_name)  # 现在要求describe不能是中文了
         except Exception as e:
             print(e)
             return None,None,None
     # 直接使用pipeline最新的版本运行
     try:
-        run = client.run_pipeline(experiment_id = experiment.id,pipeline_id=pipeline_argo_id,version_id=pipeline_argo_version_id,job_name=pipeline_name+"_version_at_"+datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'))
+        run = kfp_client.run_pipeline(experiment_id = experiment.id,pipeline_id=pipeline_argo_id,version_id=pipeline_argo_version_id,job_name=pipeline_name+"_version_at_"+datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'))
         return pipeline_argo_id, pipeline_argo_version_id, run.id
     except Exception as e:
         print(e)
@@ -611,7 +599,7 @@ def run_pipeline(pipeline_file,pipeline_name,kfp_host,pipeline_argo_id,pipeline_
 class Pipeline_ModelView_Base():
     label_title='任务流'
     datamodel = SQLAInterface(Pipeline)
-    check_redirect_list_url = '/pipeline_modelview/list/?_flt_2_name='
+    check_redirect_list_url = conf.get('MODEL_URLS',{}).get('pipeline','')
 
     base_permissions = ['can_show','can_edit','can_list','can_delete','can_add']
     base_order = ("changed_on", "desc")
@@ -619,12 +607,20 @@ class Pipeline_ModelView_Base():
     order_columns = ['id']
 
     list_columns = ['id','project','pipeline_url','creator','modified']
-    add_columns = ['project','name','describe','schedule_type','cron_time','depends_on_past','max_active_runs','expired_limit','parallelism','global_env','alert_status','alert_user','parameter']
-    show_columns = ['project','name','describe','schedule_type','cron_time','depends_on_past','max_active_runs','expired_limit','parallelism','global_env','dag_json_html','pipeline_file_html','pipeline_argo_id','version_id','run_id','created_by','changed_by','created_on','changed_on','expand_html','parameter_html']
-    edit_columns = add_columns
+    cols_width={
+        "id":{"type": "ellip2", "width": 100},
+        "project": {"type": "ellip2", "width": 200},
+        "pipeline_url":{"type": "ellip2", "width": 500},
+        "modified": {"type": "ellip2", "width": 150}
+    }
+    add_columns = ['project','name','describe']
+    edit_columns = ['project', 'name', 'describe', 'schedule_type', 'cron_time', 'depends_on_past', 'max_active_runs','expired_limit', 'parallelism', 'global_env', 'alert_status', 'alert_user', 'parameter','cronjob_start_time']
+    show_columns = ['project','name','describe','schedule_type','cron_time','depends_on_past','max_active_runs','expired_limit','parallelism','global_env','dag_json','pipeline_file','pipeline_argo_id','version_id','run_id','created_by','changed_by','created_on','changed_on','expand','parameter','alert_status','alert_user','cronjob_start_time']
+    # show_columns = ['project','name','describe','schedule_type','cron_time','depends_on_past','max_active_runs','parallelism','global_env','dag_json','pipeline_file_html','pipeline_argo_id','version_id','run_id','created_by','changed_by','created_on','changed_on','expand']
+    search_columns = ['id', 'created_by', 'name', 'describe', 'schedule_type', 'project']
 
 
-    base_filters = [["id", Pipeline_Filter, lambda: []]]  # 设置权限过滤器
+    base_filters = [["id", Pipeline_Filter, lambda: []]]
     conv = GeneralModelConverter(datamodel)
 
 
@@ -632,7 +628,7 @@ class Pipeline_ModelView_Base():
 
         "name": StringField(
             _(datamodel.obj.lab('name')),
-            description="英文名(字母、数字、- 组成)，最长50个字符",
+            description="英文名(小写字母、数字、- 组成)，最长50个字符",
             widget=BS3TextFieldWidget(),
             validators=[Regexp("^[a-z][a-z0-9\-]*[a-z0-9]$"),Length(1,54),DataRequired()]
         ),
@@ -650,6 +646,7 @@ class Pipeline_ModelView_Base():
         ),
         "dag_json": StringField(
             _(datamodel.obj.lab('dag_json')),
+            default='{}',
             widget=MyBS3TextAreaFieldWidget(rows=10),  # 传给widget函数的是外层的field对象，以及widget函数的参数
         ),
         "namespace": StringField(
@@ -668,6 +665,7 @@ class Pipeline_ModelView_Base():
             _(datamodel.obj.lab('image_pull_policy')),
             description="镜像拉取策略(always为总是拉取远程镜像，IfNotPresent为若本地存在则使用本地镜像)",
             widget=Select2Widget(),
+            default='Always',
             choices=[['Always','Always'],['IfNotPresent','IfNotPresent']]
         ),
 
@@ -719,7 +717,8 @@ class Pipeline_ModelView_Base():
             widget=Select2ManyWidget(),
             choices=[[x, x] for x in
                      ['Created', 'Pending', 'Running', 'Succeeded', 'Failed', 'Unknown', 'Waiting', 'Terminated']],
-            description="选择通知状态"
+            description="选择通知状态",
+            validators=[Length(0,400),]
         ),
         "alert_user": StringField(
             label=_(datamodel.obj.lab('alert_user')),
@@ -748,7 +747,7 @@ class Pipeline_ModelView_Base():
         return False
 
 
-    # 验证args参数
+    # 验证args参数,并自动排版dag_json
     # @pysnooper.snoop(watch_explode=('item'))
     def pipeline_args_check(self, item):
         core.validate_str(item.name,'name')
@@ -824,14 +823,20 @@ class Pipeline_ModelView_Base():
         if dag_json:
             pipeline.dag_json = json.dumps(dag_json)
 
-    # @pysnooper.snoop()
+    # @pysnooper.snoop(watch_explode=('item'))
     def pre_add(self, item):
+        if not item.project or item.project.type!='org':
+            project=db.session.query(Project).filter_by(name='public').filter_by(type='org').first()
+            if project:
+                item.project = project
+
         item.name = item.name.replace('_', '-')[0:54].lower().strip('-')
         # item.alert_status = ','.join(item.alert_status)
         self.pipeline_args_check(item)
         item.create_datetime=datetime.datetime.now()
         item.change_datetime = datetime.datetime.now()
-        item.parameter = json.dumps({"cronjob_start_time":datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, indent=4, ensure_ascii=False)
+        item.cronjob_start_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        item.parameter = json.dumps({}, indent=4, ensure_ascii=False)
 
 
 
@@ -854,9 +859,7 @@ class Pipeline_ModelView_Base():
             item.parameter = '{}'
 
         if (item.schedule_type=='crontab' and self.src_item_json.get("schedule_type")=='once') or (item.cron_time!=self.src_item_json.get("cron_time",'')):
-            parameter = json.loads(item.parameter if item.parameter else '{}')
-            parameter.update({"cronjob_start_time":datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
-            item.parameter = json.dumps(parameter,indent=4,ensure_ascii=False)
+            item.cronjob_start_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # 限制提醒
         if item.schedule_type=='crontab':
@@ -914,56 +917,6 @@ class Pipeline_ModelView_Base():
         except Exception as e:
             print(e)
             return json_response(message=str(e),status=-1,result={})
-
-
-    @event_logger.log_this
-    @expose("/list/")
-    @has_access
-    def list(self):
-        args = request.args.to_dict()
-        if '_flt_0_created_by' in args and args['_flt_0_created_by']=='':
-            print(request.url)
-            print(request.path)
-            flash('去除过滤条件->查看所有pipeline','success')
-            return redirect(request.url.replace('_flt_0_created_by=','_flt_0_created_by=%s'%g.user.id))
-
-        widgets = self._list()
-        res = self.render_template(
-            self.list_template, title=self.list_title, widgets=widgets
-        )
-        return res
-
-
-    # @event_logger.log_this
-    @action(
-        "download", __("Download"), __("Download Yaml"), "fa-download", multiple=False, single=True
-    )
-    def download(self, item):
-        file_name = item.name+'-download.yaml'
-        file_dir = os.path.join(conf.get('DOWNLOAD_FOLDER'),'pipeline')
-        if not os.path.exists(file_dir):
-            os.makedirs(file_dir)
-        file = open(os.path.join(file_dir,file_name), mode='wb')
-        pipeline_file = item.pipeline_file
-        try:
-            import yaml
-            pipeline_yaml = yaml.safe_load(pipeline_file)
-            pipeline_yaml['metadata']['name']=item.name+'-'+uuid.uuid4().hex[:4]
-            pipeline_yaml['metadata']['namespace'] = 'pipeline'
-            pipeline_file = yaml.safe_dump(pipeline_yaml)
-        except Exception as e:
-            print(e)
-
-        file.write(bytes(pipeline_file, encoding='utf-8'))
-        file.close()
-        response = make_response(send_from_directory(file_dir, file_name, as_attachment=True, conditional=True))
-
-        response.headers[
-            "Content-Disposition"
-        ] = f"attachment; filename={file_name}"
-        logging.info("Ready to return response")
-        return response
-
 
 
 
@@ -1123,13 +1076,16 @@ class Pipeline_ModelView_Base():
         #     except Exception as e:
         #         print(e)
 
+
         db.session.commit()
         print(pipeline_id)
+        url = '/static/appbuilder/vison/index.html?pipeline_id=%s'%pipeline_id  # 前后端集成完毕，这里需要修改掉
         data = {
-            "url": '/static/appbuilder/vison/index.html?pipeline_id=%s'%pipeline_id  # 前后端集成完毕，这里需要修改掉
+            "url": url
         }
+        return redirect('/frontend/showOutLink?url=%s'%urllib.parse.quote(url, safe=""))
         # 返回模板
-        return self.render_template('link.html', data=data)
+        # return self.render_template('link.html', data=data)
 
 
     # # @event_logger.log_this
@@ -1191,12 +1147,25 @@ class Pipeline_ModelView_Base():
         else:
             return self.render_template('external_link.html', data=data)
 
+    @expose("/web/runhistory/<pipeline_id>", methods=["GET"])
+    def web_runhistory(self,pipeline_id):
+        url = conf.get('MODEL_URLS', {}).get('runhistory', '') + '?filter=' + urllib.parse.quote(json.dumps([{"key": "pipeline", "value": pipeline_id}], ensure_ascii=False))
+        print(url)
+        return redirect(url)
+
+
+    @expose("/web/workflow/<pipeline_id>", methods=["GET"])
+    def web_workflow(self,pipeline_id):
+        url = conf.get('MODEL_URLS', {}).get('workflow', '') + '?filter=' + urllib.parse.quote(json.dumps([{"key": "labels", "value": '"pipeline-id": "%s"'%pipeline_id}], ensure_ascii=False))
+        print(url)
+        return redirect(url)
+
 
     # @pysnooper.snoop(watch_explode=('expand'))
     def copy_db(self,pipeline):
         new_pipeline = pipeline.clone()
         expand = json.loads(pipeline.expand) if pipeline.expand else {}
-        new_pipeline.name = new_pipeline.name.replace('_', '-') + "-copy-" + uuid.uuid4().hex[:4]
+        new_pipeline.name = new_pipeline.name.replace('_', '-') + "-" + uuid.uuid4().hex[:4]
         new_pipeline.created_on = datetime.datetime.now()
         new_pipeline.changed_on = datetime.datetime.now()
         db.session.add(new_pipeline)
@@ -1270,19 +1239,33 @@ class Pipeline_ModelView(Pipeline_ModelView_Base,MyappModelView,DeleteMixin):
     # base_order = ("changed_on", "desc")
     # order_columns = ['changed_on']
 
-appbuilder.add_view(Pipeline_ModelView,"任务流",href="/pipeline_modelview/list/?_flt_0_created_by=",icon = 'fa-sitemap',category = '训练')
+appbuilder.add_view_no_menu(Pipeline_ModelView)
+
 
 # 添加api
 class Pipeline_ModelView_Api(Pipeline_ModelView_Base,MyappModelRestApi):
     datamodel = SQLAInterface(Pipeline)
     route_base = '/pipeline_modelview/api'
-    show_columns = ['project','name','describe','namespace','schedule_type','cron_time','node_selector','image_pull_policy','depends_on_past','max_active_runs','parallelism','global_env','dag_json','pipeline_file','pipeline_argo_id','version_id','run_id','created_by','changed_by','created_on','changed_on','expand']
-    # show_columns = ['name','describe','project','dag_json','namespace','global_env','schedule_type','cron_time','pipeline_file','pipeline_argo_id','version_id','run_id','node_selector','image_pull_policy','parallelism','alert_status']
-    list_columns = show_columns
-    add_columns = ['project','name','describe','namespace','schedule_type','cron_time','node_selector','image_pull_policy','depends_on_past','max_active_runs','parallelism','dag_json','global_env','expand']
-    edit_columns = add_columns
+    # show_columns = ['project','name','describe','namespace','schedule_type','cron_time','node_selector','depends_on_past','max_active_runs','parallelism','global_env','dag_json','pipeline_file_html','pipeline_argo_id','version_id','run_id','created_by','changed_by','created_on','changed_on','expand']
+    list_columns = ['id','project','pipeline_url','creator','modified']
+    add_columns = ['project','name','describe']
+    edit_columns = ['project','name','describe','schedule_type','cron_time','depends_on_past','max_active_runs','parallelism','dag_json','global_env','alert_status','alert_user','expand','parameter','cronjob_start_time']
+
+    related_views = [Task_ModelView_Api,]
+
+    def pre_add_get(self):
+        self.default_filter = {
+            "created_by": g.user.id
+        }
+
+    add_form_query_rel_fields = {
+        "project": [["name", Project_Join_Filter, 'org']]
+    }
+    edit_form_query_rel_fields=add_form_query_rel_fields
+
 
 appbuilder.add_api(Pipeline_ModelView_Api)
+
 
 
 

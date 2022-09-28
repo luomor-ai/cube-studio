@@ -22,7 +22,7 @@ from myapp.models.helpers import AuditMixinNullable, ImportMixin
 from flask import escape, g, Markup, request
 from myapp import app,db
 from myapp.models.helpers import ImportMixin
-# 添加自定义model
+
 from sqlalchemy import Column, Integer, String, ForeignKey ,Date,DateTime
 from flask_appbuilder.models.decorators import renders
 from flask import Markup
@@ -31,7 +31,7 @@ metadata = Model.metadata
 conf = app.config
 
 
-# 定义model
+
 class NNI(Model,AuditMixinNullable,MyappModelBase):
     __tablename__ = 'nni'
     id = Column(Integer, primary_key=True)
@@ -57,6 +57,8 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
     job_json = Column(Text, default='{}')  # 根据不同算法和参数写入的task模板
     trial_spec=Column(Text,default='')    # 根据不同算法和参数写入的task模板
     # code_dir = Column(String(200), default='')  # 代码挂载
+    job_worker_image = Column(String(200),nullable=True,default='')
+    job_worker_command = Column(String(200), nullable=True, default='')
     working_dir = Column(String(200), default='')  # 挂载
     volume_mount = Column(String(100), default='kubeflow-user-workspace(pvc):/mnt,kubeflow-archives(pvc):/archives')  # 挂载
     node_selector = Column(String(100), default='cpu=true,train=true')  # 挂载
@@ -101,7 +103,7 @@ class NNI(Model,AuditMixinNullable,MyappModelBase):
         if NNI_DOMAIN:
             host = "http://"+NNI_DOMAIN
         else:
-            host = "http://"+request.host # 使用当前域名打开
+            host = request.host_url.strip('/') # 使用当前域名打开
 
         return Markup(f'<a target=_blank href="{host}/nni/{self.name}/">{self.describe}</a>')
 
