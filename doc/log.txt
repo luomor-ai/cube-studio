@@ -1599,3 +1599,180 @@ Fast-forward
  create mode 100644 myapp/visionPlus/src/utils/storage.ts
  create mode 100644 myapp/visionPlus/tsconfig.json
  create mode 100644 myapp/visionPlus/yarn.lock
+
+sh pull_image_kubeflow.sh
+Using default tag: latest
+Using default tag: latest
+v0.48.0: Pulling from cube-studio/quay.io-prometheus-operator-prometheus-config-reloader
+RELEASE.2019-08-14T20-37-41Z-license-compliance: Pulling from cube-studio/gcr.io-ml-pipeline-minio
+v0.46.0: Pulling from cube-studio/quay.io-prometheus-operator-prometheus-config-reloader
+v0.3.1: Pulling from cube-studio/quay.io-coreos-kube-rbac-proxy
+v2.3.1: Pulling from cube-studio/quay.io-prometheus-prometheus
+v0.5: Pulling from cube-studio/kubesigs-kube-batch
+Error response from daemon: manifest for ccr.ccs.tencentyun.com/cube-studio/grafana-grafana:9.1.5 not found: manifest unknown: manifest unknown
+1.6.0: Pulling from cube-studio/gcr.io-ml-pipeline-persistenceagent
+v2.27.1: Pulling from cube-studio/quay.io-prometheus-prometheus
+v1.4.0: Pulling from cube-studio/volcanosh-vc-scheduler
+1.6.0: v0.56.1: Pulling from cube-studio/gcr.io-ml-pipeline-metadata-envoy
+Pulling from cube-studio/quay.io-prometheus-operator-prometheus-config-reloader
+4.0.14: Pulling from cube-studio/bitnami-redis
+v2.2.0: Pulling from cube-studio/kubernetesui-dashboard
+v1beta2-1.3.7-3.1.1: Pulling from cube-studio/spark-operator
+latest: Pulling from cube-studio/frameworkcontroller-frameworkcontroller
+v1.4.0: Pulling from cube-studio/volcanosh-vc-controller-manager
+training-operator: Pulling from cube-studio/kubeflow
+1.6.0: Pulling from cube-studio/gcr.io-ml-pipeline-viewer-crd-controller
+v0.3.0: Pulling from cube-studio/metacontroller-metacontroller
+1.6.0: Pulling from cube-studio/gcr.io-ml-pipeline-visualization-server
+1.6.0: v0.9.1: Pulling from cube-studio/gcr.io-ml-pipeline-frontend
+Pulling from cube-studio/k8s.gcr.io-prometheus-adapter-prometheus-adapter
+1.6.0: Pulling from cube-studio/gcr.io-ml-pipeline-api-server
+v0.56.1: Pulling from cube-studio/quay.io-prometheus-operator-prometheus-operator
+latest: Pulling from cube-studio/busybox
+3.10: Pulling from cube-studio/alpine
+v0.7.1: Pulling from cube-studio/nvidia-k8s-device-plugin
+v1.0.6: Pulling from cube-studio/kubernetesui-metrics-scraper
+v2.12.9-license-compliance: Pulling from cube-studio/gcr.io-ml-pipeline-argoexec
+v0.15.0: Pulling from cube-studio/quay.io-prometheus-alertmanager
+5.7: Pulling from cube-studio/mysql
+1.6.0: Pulling from cube-studio/gcr.io-ml-pipeline-metadata-writer
+v1.3.1: Pulling from cube-studio/quay.io-coreos-kube-state-metrics
+1.6.0: Pulling from cube-studio/gcr.io-ml-pipeline-scheduledworkflow
+v2.12.9-license-compliance: Pulling from cube-studio/gcr.io-ml-pipeline-workflow-controller
+0.30.0: Pulling from cube-studio/quay.io-kubernetes-ingress-controller-nginx-ingress-controller
+v2.7.5-license-compliance: Pulling from cube-studio/gcr.io-ml-pipeline-argoexec
+v0.15.2: 0.30.0: Pulling from cube-studio/quay.io-prometheus-node-exporter
+Pulling from cube-studio/gcr.io-tfx-oss-public-ml_metadata_store_server
+2.3.1-2.6.1-ubuntu20.04: Pulling from cube-studio/nvidia-dcgm-exporter
+v0.46.0: Pulling from cube-studio/quay.io-prometheus-operator-prometheus-operator
+1.0: Pulling from cube-studio/quay.io-coreos-addon-resizer
+v1.4.0: Pulling from cube-studio/volcanosh-vc-webhook-manager
+Digest: sha256:dae7dbb65fcdc329ed38a099df367b8ca2a50eaac0e6e7ea7eae10af8054c7dc
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-config-reloader:v0.46.0
+Digest: sha256:0283ae2509e1ccc71830edf382713cc3906aa55ca9418c50911854223829bf0b
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-prometheus:v2.3.1
+Digest: sha256:6ed582349bcf78436ec61ffccdb390bb960fbb546525eed310bec050bc843e9c
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-coreos-kube-rbac-proxy:v0.3.1
+Digest: sha256:e9bbf1839fa5e606951cc7c83018193f406aec8a72e93d5dedb94ee3e3e97326
+Digest: sha256:0bb17c5e731d70f7ec3f68e14e2408cf06ada31c5f6cd72aec2c7a9f243419ab
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-persistenceagent:1.6.0
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/nvidia-k8s-device-plugin:v0.7.1
+Digest: sha256:ca9e612ba1b6382ccf3642e21c9ee328ed4baa49fe84600ead7b7790c139aab4
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-prometheus:v2.27.1
+Digest: sha256:4b0969fcebc961cb9489c52a60b88edeb0806ee3e8c08c7e14e7819cf203899b
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/volcanosh-vc-scheduler:v1.4.0
+Digest: sha256:a6a8da84a7407b4a4bde771f41724a657b91aac425291bcabd3941856bd05fb3
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-visualization-server:1.6.0
+Digest: sha256:62a9a3f044397f9c6f8aa97e33142fc7c2dab8e7a856e0e522fb588baebf59b3
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-config-reloader:v0.48.0
+Digest: sha256:77eeb0b9b462033c1567e727d10e12791edbcccb206921de6ded99443bf05150
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-viewer-crd-controller:1.6.0
+Digest: sha256:2e5612ba2ed7f3cc1447bb8f00f3e0a8e35eb32cc6a0fc111abb13bf4a35144e
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/k8s.gcr.io-prometheus-adapter-prometheus-adapter:v0.9.1
+Digest: sha256:ae1b7d5726f739c6792dc94ff41c80248cff9d74ece5f2dd3260a63f769c60aa
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-frontend:1.6.0
+Digest: sha256:edbc40dee1a37e66ebc373e5512a4a20dffda81c1c364fad47cb0242f377b68f
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-metadata-envoy:1.6.0
+Digest: sha256:dcdf379c574e1773d703f0c0d56d67594e7a91d6b84d11ff46799f60fb081c52
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/busybox:latest
+Digest: sha256:d8602f1019ac75d79983c58f9df1dd3d39e7b5434a22972301daf54900aa8390
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-config-reloader:v0.56.1
+Digest: sha256:e515aad2ed234a5072c4d2ef86a1cb77d5bfe4b11aa865d9214875734c4eeb3c
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/alpine:3.10
+Digest: sha256:f4c83c41aa0753b14629fa3d0a149aaf55091f478c503150de6eb8363571e46f
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-operator:v0.56.1
+Digest: sha256:9b512a260a215d65054685511dbd867184b0041721c51126c8ef478b4f32bd5e
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-argoexec:v2.12.9-license-compliance
+Digest: sha256:e3cc776a838f26a6a8bac87caf7a32dc8cc1d9d7d434ee7676f49d6a5b7ad863
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-api-server:1.6.0
+Digest: sha256:0992b3f8206933c5959c78730cea930c939812b639602ca3d8719feb440ec0bb
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/volcanosh-vc-controller-manager:v1.4.0
+Digest: sha256:12e078f2ab1626f4a608bee7d6b0780511b23d100e3d6d9bde7fa55783eee601
+Digest: sha256:b9217b835cdcb33853f50a9cf13617ee0f8b887c508c5ac5110720de154914e4
+Digest: sha256:626279e16432d93318402dd48be506ba54142158142e72cd90c6a190e621912b
+Digest: sha256:471bdc04768eb87f624c94bf5b7e6c0ce7c8b689e900a3057c1612dd996d4281
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/frameworkcontroller-frameworkcontroller:latest
+Digest: sha256:bdae82d5b0f0b4417ec9a0d4fce45447e416b80c23b7843b457679ba432cbd11
+Digest: sha256:587abc14be9bbeed794473cf7290c40e377062f2f77f5e4e27742a77680f08e0
+Digest: sha256:4e4c2ebf19a341fd450efdd5d4cffd1addb5abbc7163fd9b08f7f7b1bc42e0ab
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/kubesigs-kube-batch:v0.5
+Digest: sha256:6db16cd0f02fee08641c8f0e7f687be7ec5de9a53ae098d3085fb66b500acded
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/metacontroller-metacontroller:v0.3.0
+Status: Downloaded newer image for ccr.ccs.tencentyun.com/cube-studio/bitnami-redis:4.0.14
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-minio:RELEASE.2019-08-14T20-37-41Z-license-compliance
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/spark-operator:v1beta2-1.3.7-3.1.1
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/kubeflow:training-operator
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/kubernetesui-dashboard:v2.2.0
+Digest: sha256:c09adb7f46e1a9b5b0bde058713c5cb47e9e7f647d38a37027cd94ef558f0612
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/kubernetesui-metrics-scraper:v1.0.6
+ccr.ccs.tencentyun.com/cube-studio/kubernetesui-dashboard:v2.2.0
+Digest: sha256:fe03d25dfeaea11d55a38ab2ba3e4982d41de34ee389f7fc9cbf68edaafa3a9a
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-metadata-writer:1.6.0
+Digest: sha256:b312c91d0de688a21075078982b5e3a48b13b46eda4df743317d3059fc3ca0d9
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-kubernetes-ingress-controller-nginx-ingress-controller:0.30.0
+Digest: sha256:d65c84937cf1d50c941fde0e9010b1ccea638eb04d373b8b79dd33d422bc4116
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-scheduledworkflow:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/kubesigs-kube-batch:v0.5
+Digest: sha256:4f9d6feb608fc5a55cbae4f23b9489f63073ab06dd46d0e87fc5114cc01857e9
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-workflow-controller:v2.12.9-license-compliance
+Digest: sha256:455fa60732b21f5527ef086caf3a72e12cc6295132c3e9b0d565e580f1d0dc5e
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-argoexec:v2.7.5-license-compliance
+Digest: sha256:55c0d339205048ba46522ac3495bfcf9848669d39ea71b950bf6da86fc2d4f1b
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-alertmanager:v0.15.0
+Digest: sha256:9b7e59fc23e7d922d6fa35b939e788a0b0f88d36ca5d78785232f47ba71f1710
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-coreos-kube-state-metrics:v1.3.1
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-prometheus:v2.3.1
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-config-reloader:v0.46.0
+ccr.ccs.tencentyun.com/cube-studio/quay.io-coreos-kube-rbac-proxy:v0.3.1
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-persistenceagent:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/nvidia-k8s-device-plugin:v0.7.1
+ccr.ccs.tencentyun.com/cube-studio/volcanosh-vc-scheduler:v1.4.0
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-prometheus:v2.27.1
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-visualization-server:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-config-reloader:v0.48.0
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-viewer-crd-controller:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/k8s.gcr.io-prometheus-adapter-prometheus-adapter:v0.9.1
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-frontend:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/busybox:latest
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-config-reloader:v0.56.1
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-metadata-envoy:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-operator:v0.56.1
+ccr.ccs.tencentyun.com/cube-studio/alpine:3.10
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-api-server:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-argoexec:v2.12.9-license-compliance
+ccr.ccs.tencentyun.com/cube-studio/volcanosh-vc-controller-manager:v1.4.0
+ccr.ccs.tencentyun.com/cube-studio/bitnami-redis:4.0.14
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-minio:RELEASE.2019-08-14T20-37-41Z-license-compliance
+ccr.ccs.tencentyun.com/cube-studio/metacontroller-metacontroller:v0.3.0
+Digest: sha256:06c614dfc9720ccc0177acf700d0e0794f0efe3a032e78ea5318c30886ce62c1
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/mysql:5.7
+ccr.ccs.tencentyun.com/cube-studio/frameworkcontroller-frameworkcontroller:latest
+ccr.ccs.tencentyun.com/cube-studio/kubeflow:training-operator
+ccr.ccs.tencentyun.com/cube-studio/spark-operator:v1beta2-1.3.7-3.1.1
+ccr.ccs.tencentyun.com/cube-studio/kubernetesui-metrics-scraper:v1.0.6
+ccr.ccs.tencentyun.com/cube-studio/quay.io-kubernetes-ingress-controller-nginx-ingress-controller:0.30.0
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-metadata-writer:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-workflow-controller:v2.12.9-license-compliance
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-scheduledworkflow:1.6.0
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-ml-pipeline-argoexec:v2.7.5-license-compliance
+Digest: sha256:728fd0db596e5c5934c9e8cc640691acbd1eb9ecadafa4771bc54c705887030f
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-coreos-addon-resizer:1.0
+Digest: sha256:b82a4824ecc84e05dc3cc78b91d78c7a0497c4dc6ad61f7710d0c49104da2d84
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/gcr.io-tfx-oss-public-ml_metadata_store_server:0.30.0
+Digest: sha256:a411c2ba0abd5d21cb23a4e9dfe45a317bec6bd27094704086682e13e93e429c
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-operator:v0.46.0
+Digest: sha256:3096538afb0203f8568639ed12fd8ad3fb8c16bbd9c4130e58791e7512f65799
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/nvidia-dcgm-exporter:2.3.1-2.6.1-ubuntu20.04
+Digest: sha256:86f3cafaa6c572d5e05ff7ff23ca7f022fed1f0f461b7daba8ef52da2faf4e37
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-node-exporter:v0.15.2
+Digest: sha256:67bec1f09cf7ee41c9a414098a0a3d69f56f87149fd8847297f5966ff8ad7282
+Status: Image is up to date for ccr.ccs.tencentyun.com/cube-studio/volcanosh-vc-webhook-manager:v1.4.0
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-alertmanager:v0.15.0
+ccr.ccs.tencentyun.com/cube-studio/quay.io-coreos-kube-state-metrics:v1.3.1
+ccr.ccs.tencentyun.com/cube-studio/mysql:5.7
+ccr.ccs.tencentyun.com/cube-studio/volcanosh-vc-webhook-manager:v1.4.0
+ccr.ccs.tencentyun.com/cube-studio/gcr.io-tfx-oss-public-ml_metadata_store_server:0.30.0
+ccr.ccs.tencentyun.com/cube-studio/nvidia-dcgm-exporter:2.3.1-2.6.1-ubuntu20.04
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-operator:v0.46.0
+ccr.ccs.tencentyun.com/cube-studio/quay.io-coreos-addon-resizer:1.0
+ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-node-exporter:v0.15.2
