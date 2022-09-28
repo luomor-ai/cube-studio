@@ -1776,3 +1776,37 @@ ccr.ccs.tencentyun.com/cube-studio/nvidia-dcgm-exporter:2.3.1-2.6.1-ubuntu20.04
 ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-operator-prometheus-operator:v0.46.0
 ccr.ccs.tencentyun.com/cube-studio/quay.io-coreos-addon-resizer:1.0
 ccr.ccs.tencentyun.com/cube-studio/quay.io-prometheus-node-exporter:v0.15.2
+
+
+kubectl delete -k cube/overlays/
+
+serviceaccount "kubeflow-dashboard" deleted
+clusterrole.rbac.authorization.k8s.io "kubeflow-clusterrole" deleted
+clusterrolebinding.rbac.authorization.k8s.io "kubeflow-dashboard" deleted
+configmap "deploy-config-7g7t75c889" deleted
+service "kubeflow-dashboard" deleted
+deployment.apps "kubeflow-dashboard" deleted
+deployment.apps "kubeflow-dashboard-schedule" deleted
+deployment.apps "kubeflow-dashboard-worker" deleted
+deployment.apps "kubeflow-watch" deleted
+virtualservice.networking.istio.io "infra-kubeflow-dashboard" deleted
+Error from server (NotFound): error when deleting "cube/overlays/": configmaps "kubeflow-dashboard-config-88dd46k9t5" not found
+Error from server (NotFound): error when deleting "cube/overlays/": configmaps "nginx-configmap" not found
+Error from server (NotFound): error when deleting "cube/overlays/": services "kubeflow-dashboard-frontend" not found
+Error from server (NotFound): error when deleting "cube/overlays/": deployments.apps "kubeflow-dashboard-frontend" not found
+
+kubectl apply -k cube/overlays/
+serviceaccount/kubeflow-dashboard created
+clusterrole.rbac.authorization.k8s.io/kubeflow-clusterrole created
+clusterrolebinding.rbac.authorization.k8s.io/kubeflow-dashboard created
+configmap/deploy-config-7g7t75c889 created
+configmap/kubeflow-dashboard-config-88dd46k9t5 created
+configmap/nginx-configmap created
+service/kubeflow-dashboard created
+service/kubeflow-dashboard-frontend created
+deployment.apps/kubeflow-dashboard created
+deployment.apps/kubeflow-dashboard-frontend created
+deployment.apps/kubeflow-dashboard-schedule created
+deployment.apps/kubeflow-dashboard-worker created
+deployment.apps/kubeflow-watch created
+virtualservice.networking.istio.io/infra-kubeflow-dashboard created
