@@ -14,8 +14,8 @@ kubectl apply -k cube/overlays/
 Gaea
 rosefinch
 Rosefinch
-sudo docker build -t yiluxiangbei/rosefinch-dashboard:base -f docker/Dockerfile-base .
-sudo docker push yiluxiangbei/rosefinch-dashboard:base
+sudo docker build -t yiluxiangbei/rosefinch-dashboard:base1 -f docker/Dockerfile-base .
+sudo docker push yiluxiangbei/rosefinch-dashboard:base1
 
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base yiluxiangbei/rosefinch-dashboard:base
