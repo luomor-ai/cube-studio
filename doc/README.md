@@ -30,6 +30,11 @@ sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v
 # cnpm install
 npm install
 npm run build
+
+# 6.1.0
+# npm install --save mobx
+npm install mobx
+cnpm install mobx
 ```
 
 ```shell
