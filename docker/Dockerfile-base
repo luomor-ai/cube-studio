@@ -17,15 +17,15 @@ RUN apt-get update -y && \
 RUN apt-get install -y --force-yes nodejs && \
     apt-get install -y --force-yes --no-install-recommends ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy
 
-RUN pip install clickhouse-sqlalchemy pysnooper pymysql gevent mysqlclient flower infi.clickhouse_orm opencv-python numpy sqlalchemy_utils
+RUN pip install clickhouse-sqlalchemy pysnooper pymysql gevent mysqlclient flower infi.clickhouse_orm opencv-python numpy sqlalchemy_utils -i https://pypi.doubanio.com/simple/
 
 WORKDIR /home/myapp
 
 COPY install/docker/requirements.txt .
 COPY install/docker/requirements-dev.txt .
 
-RUN pip install --upgrade setuptools pip && \
-    pip install -r requirements.txt -r requirements-dev.txt && \
+RUN pip install --upgrade setuptools pip -i https://pypi.doubanio.com/simple/ && \
+    pip install -r requirements.txt -r requirements-dev.txt -i https://pypi.doubanio.com/simple/ && \
     rm -rf /root/.cache/pip && \
     CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE` && \
     mkdir -p /opt/chromedriver-$CHROMEDRIVER_VERSION && \
