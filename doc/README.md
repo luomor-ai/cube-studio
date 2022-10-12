@@ -23,6 +23,27 @@ sudo docker push yiluxiangbei/rosefinch-dashboard:base
 
 sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.09.01 -f docker/Dockerfile .
 sudo docker push yiluxiangbei/rosefinch-dashboard:2022.09.01
+
+cd myapp
+sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v "$(pwd)"/root:/root --rm node:16 bash
+# npm install -g cnpm --registry=https://registry.npm.taobao.org
+# cnpm install
+npm install
+npm run build
+
+npm install yarn -g
+yarn install
+yarn build
+
+npx browserslist@latest --update-db
+mkdir node_modules/.cache
+
+chmod -R 777 node_modules/.cache/
+
+# 6.1.0
+# npm install --save mobx
+# npm install mobx
+# cnpm install mobx
 ```
 
 ```shell
