@@ -32,6 +32,7 @@ npm install
 npm run build
 
 npm install yarn -g
+yarn install
 yarn build
 
 # 6.1.0
