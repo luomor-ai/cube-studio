@@ -24,8 +24,12 @@ sudo docker push yiluxiangbei/rosefinch-dashboard:base
 sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.09.01 -f docker/Dockerfile .
 sudo docker push yiluxiangbei/rosefinch-dashboard:2022.09.01
 
-cd myapp/frontend
-sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-frontend -v "$(pwd)"/root:/root --rm node:16 bash
+cd myapp
+sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v "$(pwd)"/root:/root --rm node:16 bash
+# npm install -g cnpm --registry=https://registry.npm.taobao.org
+# cnpm install
+npm install
+npm run build
 ```
 
 ```shell
