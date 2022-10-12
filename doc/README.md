@@ -15,6 +15,7 @@ Gaea
 rosefinch
 Rosefinch
 sudo docker build -t yiluxiangbei/rosefinch-dashboard:base -f docker/Dockerfile-base .
+sudo docker push yiluxiangbei/rosefinch-dashboard:base
 
 sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.09.01 -f docker/Dockerfile .
 ```
