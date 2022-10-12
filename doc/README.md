@@ -36,6 +36,7 @@ yarn install
 yarn build
 
 npx browserslist@latest --update-db
+mkdir node_modules/.cache
 
 # 6.1.0
 # npm install --save mobx
