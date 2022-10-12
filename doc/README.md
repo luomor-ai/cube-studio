@@ -35,6 +35,8 @@ npm install yarn -g
 yarn install
 yarn build
 
+npx browserslist@latest --update-db
+
 # 6.1.0
 # npm install --save mobx
 # npm install mobx
