@@ -3,6 +3,13 @@ FROM python:3.6-jessie
 # Configure environment
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
+
+RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138
+RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9
+RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 605C66F00D6C9793
+RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 112695A0E562B32A
+RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 54404762BBB6E853
+
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak
 COPY docker/sources.list /etc/apt/sources.list
 
