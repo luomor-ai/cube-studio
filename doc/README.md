@@ -17,6 +17,10 @@ Rosefinch
 sudo docker build -t yiluxiangbei/rosefinch-dashboard:base -f docker/Dockerfile-base .
 sudo docker push yiluxiangbei/rosefinch-dashboard:base
 
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base yiluxiangbei/rosefinch-dashboard:base
+sudo docker push yiluxiangbei/rosefinch-dashboard:base
+
 sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.09.01 -f docker/Dockerfile .
 ```
 
