@@ -25,6 +25,7 @@ sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.09.01 -f docker/Docke
 sudo docker push yiluxiangbei/rosefinch-dashboard:2022.09.01
 
 cd myapp/frontend
+sudo docker run -ti --privileged --volume="$(pwd)":/frontend -v "$(pwd)"/root:/root --rm node:16 bash
 ```
 
 ```shell
