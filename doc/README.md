@@ -24,6 +24,9 @@ sudo docker push yiluxiangbei/rosefinch-dashboard:base
 sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.09.01 -f docker/Dockerfile .
 sudo docker push yiluxiangbei/rosefinch-dashboard:2022.09.01
 
+sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.10.12 -f docker/Dockerfile .
+sudo docker push yiluxiangbei/rosefinch-dashboard:2022.10.12
+
 cd myapp
 sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v "$(pwd)"/root:/root --rm node:16 bash
 # npm install -g cnpm --registry=https://registry.npm.taobao.org
@@ -44,6 +47,8 @@ chmod -R 777 node_modules/.cache/
 # npm install --save mobx
 # npm install mobx
 # cnpm install mobx
+
+docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-frontend:2022.09.01 -f docker/frontend/Dockerfile .
 ```
 
 ```shell
