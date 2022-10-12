@@ -3,6 +3,8 @@ FROM python:3.6-jessie
 # Configure environment
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak
+COPY docker/sources.list /etc/apt/sources.list
 
 RUN apt-get update -y && \
     apt-get install -y apt-transport-https apt-utils build-essential libssl-dev \
