@@ -23,6 +23,8 @@ sudo docker push yiluxiangbei/rosefinch-dashboard:base
 
 sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.09.01 -f docker/Dockerfile .
 sudo docker push yiluxiangbei/rosefinch-dashboard:2022.09.01
+
+cd myapp/frontend
 ```
 
 ```shell
