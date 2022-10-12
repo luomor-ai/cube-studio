@@ -72,3 +72,47 @@ EACCES: permission denied, open '/rosefinch-dashboard-myapp/frontend/node_module
 
 error Command failed with exit code 1.
 info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+
+
+git pull
+remote: Enumerating objects: 48, done.
+remote: Counting objects: 100% (36/36), done.
+remote: Compressing objects: 100% (10/10), done.
+remote: Total 22 (delta 12), reused 22 (delta 12), pack-reused 0
+Unpacking objects: 100% (22/22), 1.93 MiB | 1.38 MiB/s, done.
+From github.com:luomor-ai/cube-studio
+   f0377ace..699ef2c2  master     -> origin/master
+Updating f0377ace..699ef2c2
+Fast-forward
+ myapp/frontend/package-lock.json                                      |    46 +-
+ myapp/frontend/package.json                                           |     1 +
+ myapp/frontend/yarn.lock                                              | 17981 +++++++++++++++---------------
+ myapp/static/appbuilder/frontend/asset-manifest.json                  |    14 +-
+ myapp/static/appbuilder/frontend/index.html                           |     2 +-
+ myapp/static/appbuilder/frontend/static/js/442.3e75bb03.chunk.js      |     3 +
+ ...69f061c.chunk.js.LICENSE.txt => 442.3e75bb03.chunk.js.LICENSE.txt} |     0
+ myapp/static/appbuilder/frontend/static/js/442.3e75bb03.chunk.js.map  |     1 +
+ myapp/static/appbuilder/frontend/static/js/477.10424d99.chunk.js      |     2 +
+ .../js/{477.8cb5f7f5.chunk.js.map => 477.10424d99.chunk.js.map}       |     2 +-
+ myapp/static/appbuilder/frontend/static/js/477.8cb5f7f5.chunk.js      |     2 -
+ myapp/static/appbuilder/frontend/static/js/96.a69f061c.chunk.js       |     3 -
+ myapp/static/appbuilder/frontend/static/js/96.a69f061c.chunk.js.map   |     1 -
+ myapp/static/appbuilder/frontend/static/js/main.12efb421.js           |     3 +
+ .../js/{main.a3860109.js.LICENSE.txt => main.12efb421.js.LICENSE.txt} |     0
+ myapp/static/appbuilder/frontend/static/js/main.12efb421.js.map       |     1 +
+ myapp/static/appbuilder/frontend/static/js/main.a3860109.js           |     3 -
+ myapp/static/appbuilder/frontend/static/js/main.a3860109.js.map       |     1 -
+ 18 files changed, 8872 insertions(+), 9194 deletions(-)
+ create mode 100644 myapp/static/appbuilder/frontend/static/js/442.3e75bb03.chunk.js
+ rename myapp/static/appbuilder/frontend/static/js/{96.a69f061c.chunk.js.LICENSE.txt => 442.3e75bb03.chunk.js.LICENSE.txt} (100%)
+ create mode 100644 myapp/static/appbuilder/frontend/static/js/442.3e75bb03.chunk.js.map
+ create mode 100644 myapp/static/appbuilder/frontend/static/js/477.10424d99.chunk.js
+ rename myapp/static/appbuilder/frontend/static/js/{477.8cb5f7f5.chunk.js.map => 477.10424d99.chunk.js.map} (99%)
+ delete mode 100644 myapp/static/appbuilder/frontend/static/js/477.8cb5f7f5.chunk.js
+ delete mode 100644 myapp/static/appbuilder/frontend/static/js/96.a69f061c.chunk.js
+ delete mode 100644 myapp/static/appbuilder/frontend/static/js/96.a69f061c.chunk.js.map
+ create mode 100644 myapp/static/appbuilder/frontend/static/js/main.12efb421.js
+ rename myapp/static/appbuilder/frontend/static/js/{main.a3860109.js.LICENSE.txt => main.12efb421.js.LICENSE.txt} (100%)
+ create mode 100644 myapp/static/appbuilder/frontend/static/js/main.12efb421.js.map
+ delete mode 100644 myapp/static/appbuilder/frontend/static/js/main.a3860109.js
+ delete mode 100644 myapp/static/appbuilder/frontend/static/js/main.a3860109.js.map
