@@ -48,7 +48,7 @@ chmod -R 777 node_modules/.cache/
 # npm install mobx
 # cnpm install mobx
 
-docker build -t yiluxiangbei/kubeflow-dashboard-frontend:2022.10.12 -f docker/frontend/Dockerfile .
+sudo docker build -t yiluxiangbei/kubeflow-dashboard-frontend:2022.10.12 -f docker/frontend/Dockerfile .
 sudo docker push yiluxiangbei/rosefinch-dashboard:2022.10.12
 ```
 
