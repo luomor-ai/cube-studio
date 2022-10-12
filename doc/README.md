@@ -31,10 +31,13 @@ sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v
 npm install
 npm run build
 
+npm install yarn -g
+yarn build
+
 # 6.1.0
 # npm install --save mobx
-npm install mobx
-cnpm install mobx
+# npm install mobx
+# cnpm install mobx
 ```
 
 ```shell
