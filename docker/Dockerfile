@@ -1,6 +1,6 @@
 # docker build -t ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2022.09.01 -f install/docker/Dockerfile .
 
-FROM ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:base
+FROM yiluxiangbei/rosefinch-dashboard:base
 
 RUN apt-get update && apt-get install -y mysql-client zip
 
