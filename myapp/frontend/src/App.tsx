@@ -314,18 +314,18 @@ const AppWrapper = (props: IProps) => {
             />
           </div> */}
 
-          <a
+          <!--<a
             href="https://github.com/tencentmusic/cube-studio/wiki"
             target="_blank"
             className="mr12 d-f ac"
           >
             <span className="pr4">平台文档</span><QuestionCircleOutlined className="c-theme" style={{ fontSize: 20 }} />
-          </a>
+          </a>-->
 
 
-          <GithubOutlined className="mr24 c-theme" style={{ fontSize: 20 }} onClick={() => {
+          <!--<GithubOutlined className="mr24 c-theme" style={{ fontSize: 20 }} onClick={() => {
             window.open('https://github.com/tencentmusic/cube-studio', '_bank')
-          }} />
+          }} />-->
 
           <Dropdown overlay={<Menu>
             <Menu.Item onClick={() => {
