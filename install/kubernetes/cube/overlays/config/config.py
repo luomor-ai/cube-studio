@@ -874,7 +874,7 @@ INFERNENCE_HEALTH={
 }
 DOCKER_IMAGES='ccr.ccs.tencentyun.com/cube-studio/docker'
 # notebook，pipeline镜像拉取策略
-IMAGE_PULL_POLICY='Always'    # IfNotPresent   Always
+IMAGE_PULL_POLICY='IfNotPresent'    # IfNotPresent   Always
 
 # 任务资源使用情况地址
 GRAFANA_TASK_PATH='/grafana/d/pod-info/pod-info?var-pod='
