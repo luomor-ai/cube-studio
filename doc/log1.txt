@@ -236,3 +236,5 @@ deployment.apps/kubeflow-dashboard-schedule created
 deployment.apps/kubeflow-dashboard-worker created
 deployment.apps/kubeflow-watch created
 virtualservice.networking.istio.io/infra-kubeflow-dashboard created
+
+/usr/local/lib/python3.6/dist-packages/flask_appbuilder/templates/appbuilder/general/security/login_db.html
