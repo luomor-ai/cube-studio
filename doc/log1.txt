@@ -204,3 +204,35 @@ C451.99 65.684 450.801 63.0066 448.946 60.8745C447.091 58.7423 444.112 57.6762 4
 
 error Command failed with exit code 1.
 info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+
+kubectl delete -k cube/overlays/
+serviceaccount "kubeflow-dashboard" deleted
+clusterrole.rbac.authorization.k8s.io "kubeflow-clusterrole" deleted
+clusterrolebinding.rbac.authorization.k8s.io "kubeflow-dashboard" deleted
+configmap "deploy-config-7g7t75c889" deleted
+configmap "kubeflow-dashboard-config-7hk2tghb5b" deleted
+configmap "nginx-configmap" deleted
+service "kubeflow-dashboard" deleted
+service "kubeflow-dashboard-frontend" deleted
+deployment.apps "kubeflow-dashboard" deleted
+deployment.apps "kubeflow-dashboard-frontend" deleted
+deployment.apps "kubeflow-dashboard-schedule" deleted
+deployment.apps "kubeflow-dashboard-worker" deleted
+deployment.apps "kubeflow-watch" deleted
+virtualservice.networking.istio.io "infra-kubeflow-dashboard" deleted
+
+kubectl apply -k cube/overlays/
+serviceaccount/kubeflow-dashboard created
+clusterrole.rbac.authorization.k8s.io/kubeflow-clusterrole created
+clusterrolebinding.rbac.authorization.k8s.io/kubeflow-dashboard created
+configmap/deploy-config-7g7t75c889 created
+configmap/kubeflow-dashboard-config-7hk2tghb5b created
+configmap/nginx-configmap created
+service/kubeflow-dashboard created
+service/kubeflow-dashboard-frontend created
+deployment.apps/kubeflow-dashboard created
+deployment.apps/kubeflow-dashboard-frontend created
+deployment.apps/kubeflow-dashboard-schedule created
+deployment.apps/kubeflow-dashboard-worker created
+deployment.apps/kubeflow-watch created
+virtualservice.networking.istio.io/infra-kubeflow-dashboard created
