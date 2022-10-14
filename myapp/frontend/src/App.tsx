@@ -125,7 +125,7 @@ const AppWrapper = (props: IProps) => {
     if (currentRoute && currentRoute.title) {
       document.title = `cube - ${currentRoute.title}`
     } else {
-      document.title = 'cube计算平台'
+      document.title = 'rosefinch计算平台'
     }
   }
 
