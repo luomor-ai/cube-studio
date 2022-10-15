@@ -60,6 +60,10 @@ sudo docker tag yiluxiangbei/rosefinch-dashboard-frontend:2022.10.12 ccr.ccs.ten
 ```
 
 ```shell
+
+```
+
+```shell
 pine 松
 cerdar 雪松类
 larch 落叶松
