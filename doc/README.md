@@ -60,7 +60,8 @@ sudo docker tag yiluxiangbei/rosefinch-dashboard-frontend:2022.10.12 ccr.ccs.ten
 ```
 
 ```shell
-
+https://docker-76009.sz.gfp.tencent-cloud.com/kubeflow/make_pipeline.mp4
+https://docker-76009.sz.gfp.tencent-cloud.com/kubeflow/make_job_template.mp4
 ```
 
 ```shell
