@@ -330,6 +330,12 @@ Failed to compile.
 ructor or null
 Referenced from: /rosefinch-dashboard-myapp/vision/.eslintrc
 
-
 error Command failed with exit code 1.
 info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+
+
+warning package.json: "dependencies" has dependency "@typescript-eslint/eslint-plugin" with range "^5.40.0" that collides
+ with a dependency in "devDependencies" of the same name with version "^4.29.1"
+warning package.json: "dependencies" has dependency "eslint" with range "^8.25.0" that collides with a dependency in "dev
+Dependencies" of the same name with version "^7.32.0"
+$ react-app-rewired build

@@ -46,7 +46,7 @@ yarn build
 # cnpm i @rushstack/eslint-patch
 # cnpm i @rushstack/eslint-patch@1.1.4
 # cnpm i eslint
-# cnpm i @typescript-eslint
+# cnpm i @typescript-eslint/eslint-plugin
 # cnpm i eslint-config-react-app@7.0.1
 # cnpm i eslint-config-react-app@7.0.0
 # cnpm i eslint-config-react-app@7.0.0-next.91
