@@ -42,6 +42,7 @@ yarn build
 
 # npm install -g cnpm --registry=https://registry.npm.taobao.org
 # cnpm install
+# cnpm install rushstack
 npm install
 npm run build
 
