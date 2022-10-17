@@ -42,6 +42,8 @@ yarn build
 
 # npm install -g cnpm --registry=https://registry.npm.taobao.org
 # cnpm install
+# cnpm i @rushstack/eslint-patch
+# cnpm i @rushstack/eslint-patch@1.1.4
 npm install
 npm run build
 
