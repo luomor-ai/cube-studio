@@ -33,6 +33,10 @@ cd myapp
 sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v "$(pwd)"/root:/root --rm node:16 bash
 cd /rosefinch-dashboard-myapp/frontend
 yarn build
+cd /rosefinch-dashboard-myapp/vision
+yarn build
+cd /rosefinch-dashboard-myapp/visionPlus
+yarn build
 
 # npm install -g cnpm --registry=https://registry.npm.taobao.org
 # cnpm install
