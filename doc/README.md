@@ -34,6 +34,7 @@ sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v
 cd /rosefinch-dashboard-myapp/frontend
 yarn build
 cd /rosefinch-dashboard-myapp/vision
+sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v "$(pwd)"/root:/root --rm node:14 bash
 yarn build
 cd /rosefinch-dashboard-myapp/visionPlus
 yarn build
