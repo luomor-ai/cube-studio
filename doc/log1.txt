@@ -289,3 +289,30 @@ npm ERR! See /root/.npm/eresolve-report.txt for a full report.
 npm ERR! A complete log of this run can be found in:
 npm ERR!     /root/.npm/_logs/2022-10-17T04_06_19_015Z-debug.log
 
+ cnpm i eslint-config-react-app@7.0.0
+(node:485) ExperimentalWarning: stream/web is an experimental feature. This feature could change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Installed 1 packages
+✔ Linked 15 latest versions
+✔ Run 0 scripts
+peerDependencies WARNING eslint-config-react-app@7.0.0 requires a peer of eslint@^8.0.0 but eslint@7.32.0 was installed
+✔ All packages installed (1 packages installed from npm registry, used 1s(network 1s), speed 56.02KB/s, json 2(65.05KB),
+tarball 5.82KB, manifests cache hit 14, etag hit 14 / miss 2)
+
+ cnpm i eslint-config-react-app@6.0.0
+(node:552) ExperimentalWarning: stream/web is an experimental feature. This feature could change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Installed 1 packages
+✔ Linked 5 latest versions
+✔ Run 0 scripts
+peerDependencies WARNING eslint-config-react-app@6.0.0 requires a peer of @typescript-eslint/parser@^4.0.0 but @typescrip
+t-eslint/parser@5.40.0 was installed
+peerDependencies WARNING eslint-config-react-app@6.0.0 requires a peer of babel-eslint@^10.0.0 but none was installed
+peerDependencies WARNING eslint-config-react-app@6.0.0 requires a peer of eslint-plugin-flowtype@^5.2.0 but eslint-plugin
+-flowtype@8.0.3 was installed
+peerDependencies WARNING eslint-config-react-app@6.0.0 requires a peer of eslint-plugin-jest@^24.0.0 but eslint-plugin-je
+st@25.7.0 was installed
+peerDependencies WARNING eslint-config-react-app@6.0.0 requires a peer of eslint-plugin-testing-library@^3.9.0 but eslint
+-plugin-testing-library@5.7.2 was installed
+✔ All packages installed (1 packages installed from npm registry, used 280ms(network 269ms), speed 21.21KB/s, json 0(0B),
+ tarball 5.71KB, manifests cache hit 6, etag hit 0 / miss 0)

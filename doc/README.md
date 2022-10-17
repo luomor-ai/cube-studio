@@ -44,6 +44,9 @@ yarn build
 # cnpm install
 # cnpm i @rushstack/eslint-patch
 # cnpm i @rushstack/eslint-patch@1.1.4
+# cnpm i eslint-config-react-app@7.0.0
+# cnpm i eslint-config-react-app@7.0.0-next.91
+# cnpm i eslint-config-react-app@6.0.0
 npm install
 npm run build
 
