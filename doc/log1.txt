@@ -255,13 +255,13 @@ Creating an optimized production build...
 
 Failed to compile.
 
-[eslint] Cannot read config file: /rosefinch-dashboard-myapp/vision/node_modules/_eslint-config-react-app@7.0.1@eslint-co
-nfig-react-app/base.js
+[eslint] Cannot read config file: /rosefinch-dashboard-myapp/vision/node_modules/_eslint-config-react-app@7.0.1@eslint-config-react-app/base.js
 Error: Failed to patch ESLint because the calling module was not recognized.
 If you are using a newer ESLint version that may be unsupported, please create a GitHub issue:
 https://github.com/microsoft/rushstack/issues
 Referenced from: BaseConfig
 
+rushstack If you are using a newer ESLint version that may be unsupported
 
 error Command failed with exit code 1.
 info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
