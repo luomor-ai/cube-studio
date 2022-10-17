@@ -239,8 +239,7 @@ virtualservice.networking.istio.io/infra-kubeflow-dashboard created
 
 /usr/local/lib/python3.6/dist-packages/flask_appbuilder/templates/appbuilder/general/security/login_db.html
 
-[eslint] Cannot read config file: /rosefinch-dashboard-myapp/visionPlus/node_modules/_eslint-config-react-app@7.0.1@eslin
-t-config-react-app/base.js
+[eslint] Cannot read config file: /rosefinch-dashboard-myapp/visionPlus/node_modules/_eslint-config-react-app@7.0.1@eslint-config-react-app/base.js
 Error: Failed to patch ESLint because the calling module was not recognized.
 If you are using a newer ESLint version that may be unsupported, please create a GitHub issue:
 https://github.com/microsoft/rushstack/issues
