@@ -35,14 +35,13 @@ cd /rosefinch-dashboard-myapp/frontend
 yarn build
 cd /rosefinch-dashboard-myapp/vision
 # sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v "$(pwd)"/root:/root --rm node:14 bash
-npm install rushstack
+npm i @rushstack/eslint-patch
 yarn build
 cd /rosefinch-dashboard-myapp/visionPlus
 yarn build
 
 # npm install -g cnpm --registry=https://registry.npm.taobao.org
 # cnpm install
-# cnpm install rushstack
 npm install
 npm run build
 
@@ -69,6 +68,7 @@ sudo docker tag yiluxiangbei/rosefinch-dashboard-frontend:2022.10.12 ccr.ccs.ten
 ```shell
 https://docker-76009.sz.gfp.tencent-cloud.com/kubeflow/make_pipeline.mp4
 https://docker-76009.sz.gfp.tencent-cloud.com/kubeflow/make_job_template.mp4
+https://rushstack.io/
 ```
 
 ```shell
