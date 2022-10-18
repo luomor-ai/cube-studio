@@ -29,6 +29,11 @@ sudo docker push yiluxiangbei/rosefinch-dashboard:2022.10.12
 sudo docker pull yiluxiangbei/rosefinch-dashboard:2022.10.12
 sudo docker tag yiluxiangbei/rosefinch-dashboard:2022.10.12 ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2022.10.12
 
+sudo docker build -t yiluxiangbei/rosefinch-dashboard:2022.10.18 -f docker/Dockerfile .
+sudo docker push yiluxiangbei/rosefinch-dashboard:2022.10.18
+sudo docker pull yiluxiangbei/rosefinch-dashboard:2022.10.18
+sudo docker tag yiluxiangbei/rosefinch-dashboard:2022.10.18 ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2022.10.12
+
 cd myapp
 sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v "$(pwd)"/root:/root --rm node:16 bash
 cd /rosefinch-dashboard-myapp/frontend
