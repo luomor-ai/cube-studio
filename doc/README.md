@@ -78,6 +78,11 @@ sudo docker build -t yiluxiangbei/rosefinch-dashboard-frontend:2022.10.12 -f doc
 sudo docker push yiluxiangbei/rosefinch-dashboard-frontend:2022.10.12
 sudo docker pull yiluxiangbei/rosefinch-dashboard-frontend:2022.10.12
 sudo docker tag yiluxiangbei/rosefinch-dashboard-frontend:2022.10.12 ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-frontend:2022.10.12
+
+sudo docker build -t yiluxiangbei/rosefinch-dashboard-frontend:2022.10.18 -f docker/frontend/Dockerfile .
+sudo docker push yiluxiangbei/rosefinch-dashboard-frontend:2022.10.18
+sudo docker pull yiluxiangbei/rosefinch-dashboard-frontend:2022.10.18
+sudo docker tag yiluxiangbei/rosefinch-dashboard-frontend:2022.10.18 ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard-frontend:2022.10.12
 ```
 
 ```shell
