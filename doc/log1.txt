@@ -363,3 +363,12 @@ Search for the keywords to learn more about each error.
 error Command failed with exit code 1.
 info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
 
+ npm run build
+
+> vite-ml-platform@0.1.0 build
+> react-app-rewired build
+
+Creating an optimized production build...
+Failed to compile.
+
+[eslint] EACCES: permission denied, open '/rosefinch-dashboard-myapp/vision/node_modules/.cache/.eslintcache'

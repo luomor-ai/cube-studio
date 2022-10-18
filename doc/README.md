@@ -46,6 +46,8 @@ yarn build
 vision
 cnpm i eslint
 cnpm i @typescript-eslint/eslint-plugin
+chmod -R 777 node_modules/.cache/.eslintcache
+npm run build
 # cnpm i @rushstack/eslint-patch
 # cnpm i @rushstack/eslint-patch@1.1.4
 # cnpm i eslint-config-react-app@7.0.1
