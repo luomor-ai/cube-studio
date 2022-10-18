@@ -36,17 +36,18 @@ yarn build
 cd /rosefinch-dashboard-myapp/vision
 # sudo docker run -ti --privileged --volume="$(pwd)":/rosefinch-dashboard-myapp -v "$(pwd)"/root:/root --rm node:14 bash
 # npm i @rushstack/eslint-patch
-npm run lint-fix
+# npm run lint-fix
 yarn build
 cd /rosefinch-dashboard-myapp/visionPlus
 yarn build
 
 # npm install -g cnpm --registry=https://registry.npm.taobao.org
 # cnpm install
+vision
+cnpm i eslint
+cnpm i @typescript-eslint/eslint-plugin
 # cnpm i @rushstack/eslint-patch
 # cnpm i @rushstack/eslint-patch@1.1.4
-# cnpm i eslint
-# cnpm i @typescript-eslint/eslint-plugin
 # cnpm i eslint-config-react-app@7.0.1
 # cnpm i eslint-config-react-app@7.0.0
 # cnpm i eslint-config-react-app@7.0.0-next.91
