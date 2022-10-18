@@ -372,3 +372,25 @@ Creating an optimized production build...
 Failed to compile.
 
 [eslint] EACCES: permission denied, open '/rosefinch-dashboard-myapp/vision/node_modules/.cache/.eslintcache'
+
+
+npm run build
+
+> vite-ml-platform@0.1.0 build
+> react-app-rewired build
+
+Creating an optimized production build...
+=============
+
+WARNING: You are currently running a version of TypeScript which is not officially supported by @typescript-eslint/typesc
+ript-estree.
+
+You may find that it works just fine, or you may not.
+
+SUPPORTED TYPESCRIPT VERSIONS: >=3.3.1 <4.5.0
+
+YOUR TYPESCRIPT VERSION: 4.8.4
+
+Please only submit bug reports when using the officially supported version.
+
+=============
