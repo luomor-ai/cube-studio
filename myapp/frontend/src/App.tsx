@@ -123,7 +123,7 @@ const AppWrapper = (props: IProps) => {
     const routerMap: Record<string, IRouterConfigPlusItem> = currnetRouteConfig.reduce((pre: any, next) => ({ ...pre, [`${next.path || ''}`]: next }), {})
     const currentRoute = routerMap[currentAppName]
     if (currentRoute && currentRoute.title) {
-      document.title = `cube - ${currentRoute.title}`
+      document.title = `rosefinch - ${currentRoute.title}`
     } else {
       document.title = 'rosefinch计算平台'
     }
