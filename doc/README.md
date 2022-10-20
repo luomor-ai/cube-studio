@@ -104,8 +104,12 @@ sudo docker push yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6
 wget https://docker-76009.sz.gfp.tencent-cloud.com/github/cube-studio/pipeline/coco_data_sample.zip && unzip -o coco_data_sample.zip && cd  coco_data_sample && bash reset_file.sh
 ai.7otech.com
 wget https://docker-76009.sz.gfp.tencent-cloud.com/github/cube-studio/pipeline/coco_data_sample.zip
-mv coco_data_sample.zip
-ai.7otech.com
+sudo mv coco_data_sample.zip /home/7otech/git/ai-web1/webroot/
+wget https://ai.7otech.com/coco_data_sample.zip && unzip -o coco_data_sample.zip && cd  coco_data_sample && bash reset_file.sh
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/target-detection
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/target-detection yiluxiangbei/target-detection
+sudo docker push yiluxiangbei/target-detection
 ```
 
 ```shell
