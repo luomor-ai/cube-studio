@@ -96,6 +96,10 @@ docker rmi `docker images|grep none |  awk '{print $3}'`
 https://docker-76009.sz.gfp.tencent-cloud.com/kubeflow/make_pipeline.mp4
 https://docker-76009.sz.gfp.tencent-cloud.com/kubeflow/make_job_template.mp4
 https://rushstack.io/
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda10.1-cudnn7-python3.6
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda10.1-cudnn7-python3.6 yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6
+sudo docker push yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6
 ```
 
 ```shell
