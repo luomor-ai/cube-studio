@@ -100,6 +100,8 @@ https://rushstack.io/
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda10.1-cudnn7-python3.6
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda10.1-cudnn7-python3.6 yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6
 sudo docker push yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6
+
+wget https://docker-76009.sz.gfp.tencent-cloud.com/github/cube-studio/pipeline/coco_data_sample.zip && unzip -o coco_data_sample.zip && cd  coco_data_sample && bash reset_file.sh
 ```
 
 ```shell
