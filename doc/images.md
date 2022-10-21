@@ -25,6 +25,7 @@ https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/paddle
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/paddle:20221010
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/paddle:20221010 yiluxiangbei/paddle:20221010
 sudo docker push yiluxiangbei/paddle:20221010
+https://github.com/tensorbyte/rosefinch
 
 https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/hadoop
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/hadoop:20221010
