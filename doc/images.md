@@ -39,4 +39,12 @@ sudo docker push yiluxiangbei/deploy-service:20211001
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/object_detection_on_darknet:v1
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/object_detection_on_darknet:v1 yiluxiangbei/object_detection_on_darknet:v1
 sudo docker push yiluxiangbei/object_detection_on_darknet:v1
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/volcano:offline-predict-20220101
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/volcano:offline-predict-20220101 yiluxiangbei/volcano:offline-predict-20220101
+sudo docker push yiluxiangbei/volcano:offline-predict-20220101
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/kaldi_distributed_on_volcano:v2
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/kaldi_distributed_on_volcano:v2 yiluxiangbei/kaldi_distributed_on_volcano:v2
+sudo docker push yiluxiangbei/kaldi_distributed_on_volcano:v2
 ```
