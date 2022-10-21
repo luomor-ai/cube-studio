@@ -31,4 +31,8 @@ https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/hadoop
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/hadoop:20221010
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/hadoop:20221010 yiluxiangbei/hadoop:20221010
 sudo docker push yiluxiangbei/hadoop:20221010
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/deploy-service:20211001
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/deploy-service:20211001 yiluxiangbei/deploy-service:20211001
+sudo docker push yiluxiangbei/deploy-service:20211001
 ```
