@@ -35,4 +35,8 @@ sudo docker push yiluxiangbei/hadoop:20221010
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/deploy-service:20211001
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/deploy-service:20211001 yiluxiangbei/deploy-service:20211001
 sudo docker push yiluxiangbei/deploy-service:20211001
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/object_detection_on_darknet:v1
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/object_detection_on_darknet:v1 yiluxiangbei/object_detection_on_darknet:v1
+sudo docker push yiluxiangbei/object_detection_on_darknet:v1
 ```
