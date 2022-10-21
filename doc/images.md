@@ -91,4 +91,8 @@ sudo docker push yiluxiangbei/tf_distributed_train_k8s:20221010
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/xgb_train_and_predict:v1
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/xgb_train_and_predict:v1 yiluxiangbei/xgb_train_and_predict:v1
 sudo docker push yiluxiangbei/xgb_train_and_predict:v1
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/sklearn_estimator:v1
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/sklearn_estimator:v1 yiluxiangbei/sklearn_estimator:v1
+sudo docker push yiluxiangbei/sklearn_estimator:v1
 ```
