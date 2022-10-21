@@ -67,4 +67,16 @@ sudo docker push yiluxiangbei/tf_model_offline_predict:latest
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf_distributed_eval:latest
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf_distributed_eval:latest yiluxiangbei/tf_distributed_eval:latest
 sudo docker push yiluxiangbei/tf_distributed_eval:latest
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf2.3_model_evaluation:latest
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf2.3_model_evaluation:latest yiluxiangbei/tf2.3_model_evaluation:latest
+sudo docker push yiluxiangbei/tf2.3_model_evaluation:latest
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf_distributed_train:latest
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf_distributed_train:latest yiluxiangbei/tf_distributed_train:latest
+sudo docker push yiluxiangbei/tf_distributed_train:latest
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf2.3_plain_train:latest
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf2.3_plain_train:latest yiluxiangbei/tf2.3_plain_train:latest
+sudo docker push yiluxiangbei/tf2.3_plain_train:latest
 ```
