@@ -83,4 +83,12 @@ sudo docker push yiluxiangbei/tf2.3_plain_train:latest
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf2.3_keras_train:latest
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf2.3_keras_train:latest yiluxiangbei/tf2.3_keras_train:latest
 sudo docker push yiluxiangbei/tf2.3_keras_train:latest
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf_distributed_train_k8s:20221010
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf_distributed_train_k8s:20221010 yiluxiangbei/tf_distributed_train_k8s:20221010
+sudo docker push yiluxiangbei/tf_distributed_train_k8s:20221010
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/xgb_train_and_predict:v1
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/xgb_train_and_predict:v1 yiluxiangbei/xgb_train_and_predict:v1
+sudo docker push yiluxiangbei/xgb_train_and_predict:v1
 ```
