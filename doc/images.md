@@ -79,4 +79,8 @@ sudo docker push yiluxiangbei/tf_distributed_train:latest
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf2.3_plain_train:latest
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf2.3_plain_train:latest yiluxiangbei/tf2.3_plain_train:latest
 sudo docker push yiluxiangbei/tf2.3_plain_train:latest
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf2.3_keras_train:latest
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf2.3_keras_train:latest yiluxiangbei/tf2.3_keras_train:latest
+sudo docker push yiluxiangbei/tf2.3_keras_train:latest
 ```
