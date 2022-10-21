@@ -59,4 +59,12 @@ sudo docker push yiluxiangbei/horovod:20210401
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/pytorch_distributed_train_k8s:20201010
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/pytorch_distributed_train_k8s:20201010 yiluxiangbei/pytorch_distributed_train_k8s:20201010
 sudo docker push yiluxiangbei/pytorch_distributed_train_k8s:20201010
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf_model_offline_predict:latest
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf_model_offline_predict:latest yiluxiangbei/tf_model_offline_predict:latest
+sudo docker push yiluxiangbei/tf_model_offline_predict:latest
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/tf_distributed_eval:latest
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/tf_distributed_eval:latest yiluxiangbei/tf_distributed_eval:latest
+sudo docker push yiluxiangbei/tf_distributed_eval:latest
 ```
