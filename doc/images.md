@@ -15,4 +15,9 @@ https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/ner
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/ner:20220812
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/ner:20220812 yiluxiangbei/ner:20220812
 sudo docker push yiluxiangbei/ner:20220812
+
+https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/mxnet
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/mxnet:20221010
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/mxnet:20221010 yiluxiangbei/mxnet:20221010
+sudo docker push yiluxiangbei/mxnet:20221010
 ```
