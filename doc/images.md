@@ -51,4 +51,8 @@ sudo docker push yiluxiangbei/kaldi_distributed_on_volcano:v2
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/video-audio:20210601
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/video-audio:20210601 yiluxiangbei/video-audio:20210601
 sudo docker push yiluxiangbei/video-audio:20210601
+
+ccr.ccs.tencentyun.com/cube-studio/horovod:20210401
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/horovod:20210401 yiluxiangbei/horovod:20210401
+sudo docker push yiluxiangbei/horovod:20210401
 ```
