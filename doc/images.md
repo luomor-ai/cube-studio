@@ -99,4 +99,16 @@ sudo docker push yiluxiangbei/sklearn_estimator:v1
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/spark:20221010
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/spark:20221010 yiluxiangbei/spark:20221010
 sudo docker push yiluxiangbei/spark:20221010
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/ray:gpu-20210601
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/ray:gpu-20210601 yiluxiangbei/ray:gpu-20210601
+sudo docker push yiluxiangbei/ray:gpu-20210601
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/volcano:20211001
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/volcano:20211001 yiluxiangbei/volcano:20211001
+sudo docker push yiluxiangbei/volcano:20211001
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/datax:latest
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/datax:latest yiluxiangbei/datax:latest
+sudo docker push yiluxiangbei/datax:latest
 ```
