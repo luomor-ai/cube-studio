@@ -111,4 +111,32 @@ sudo docker push yiluxiangbei/volcano:20211001
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/datax:latest
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/datax:latest yiluxiangbei/datax:latest
 sudo docker push yiluxiangbei/datax:latest
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-cpu-base
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-cpu-base yiluxiangbei/notebook:jupyter-ubuntu-cpu-base
+sudo docker push yiluxiangbei/notebook:jupyter-ubuntu-cpu-base
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:vscode-ubuntu-cpu-base
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/notebook:vscode-ubuntu-cpu-base yiluxiangbei/notebook:vscode-ubuntu-cpu-base
+sudo docker push yiluxiangbei/notebook:vscode-ubuntu-cpu-base
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:vscode-ubuntu-gpu-base
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/notebook:vscode-ubuntu-gpu-base yiluxiangbei/notebook:vscode-ubuntu-gpu-base
+sudo docker push yiluxiangbei/notebook:vscode-ubuntu-gpu-base
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-gpu-base
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-gpu-base yiluxiangbei/notebook:jupyter-ubuntu-gpu-base
+sudo docker push yiluxiangbei/notebook:jupyter-ubuntu-gpu-base
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-bigdata
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-bigdata yiluxiangbei/notebook:jupyter-ubuntu-bigdata
+sudo docker push yiluxiangbei/notebook:jupyter-ubuntu-bigdata
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-machinelearning
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-machinelearning yiluxiangbei/notebook:jupyter-ubuntu-machinelearning
+sudo docker push yiluxiangbei/notebook:jupyter-ubuntu-machinelearning
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-deeplearning
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-deeplearning yiluxiangbei/notebook:jupyter-ubuntu-deeplearning
+sudo docker push yiluxiangbei/notebook:jupyter-ubuntu-deeplearning
 ```
