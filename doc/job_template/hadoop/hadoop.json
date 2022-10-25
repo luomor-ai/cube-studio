@@ -1,0 +1,18 @@
+{
+    "参数": {
+        "--command": {
+            "type": "str",
+            "item_type": "str",
+            "label": "执行命令",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "spark-submit xx",
+            "placeholder": "",
+            "describe": "执行命令",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        }
+    }
+}
