@@ -764,13 +764,13 @@ HUBSECRET_NAMESPACE=[PIPELINE_NAMESPACE,AUTOML_NAMESPACE,NOTEBOOK_NAMESPACE,SERV
 
 # notebook使用的镜像
 NOTEBOOK_IMAGES=[
-    ['ccr.ccs.tencentyun.com/cube-studio/notebook:vscode-ubuntu-cpu-base', 'vscode（cpu）'],
-    ['ccr.ccs.tencentyun.com/cube-studio/notebook:vscode-ubuntu-gpu-base', 'vscode（gpu）'],
-    ['ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-cpu-base', 'jupyter（cpu）'],
-    ['ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-gpu-base','jupyter（gpu）'],
-    ['ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-bigdata', 'jupyter（bigdata）'],
-    ['ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-machinelearning', 'jupyter（machinelearning）'],
-    ['ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-deeplearning', 'jupyter（deeplearning）'],
+    ['yiluxiangbei/notebook:vscode-ubuntu-cpu-base', 'vscode（cpu）'],
+    ['yiluxiangbei/notebook:vscode-ubuntu-gpu-base', 'vscode（gpu）'],
+    ['yiluxiangbei/notebook:jupyter-ubuntu-cpu-base', 'jupyter（cpu）'],
+    ['yiluxiangbei/notebook:jupyter-ubuntu-gpu-base','jupyter（gpu）'],
+    ['yiluxiangbei/notebook:jupyter-ubuntu-bigdata', 'jupyter（bigdata）'],
+    ['yiluxiangbei/notebook:jupyter-ubuntu-machinelearning', 'jupyter（machinelearning）'],
+    ['yiluxiangbei/notebook:jupyter-ubuntu-deeplearning', 'jupyter（deeplearning）'],
 ]
 
 # 定时检查大小的目录列表。需要再celery中启动检查任务
