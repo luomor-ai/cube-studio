@@ -1,0 +1,60 @@
+{
+    "参数": {
+        "--working_dir": {
+            "type": "str",
+            "item_type": "str",
+            "label": "",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "/mnt/xx",
+            "placeholder": "启动目录",
+            "describe": "启动目录",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--user_cmd": {
+            "type": "str",
+            "item_type": "str",
+            "label": "",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "./run.sh",
+            "placeholder": "启动命令",
+            "describe": "启动命令",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--num_worker": {
+            "type": "str",
+            "item_type": "str",
+            "label": "",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "2",
+            "placeholder": "worker数量",
+            "describe": "worker数量",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--image": {
+            "type": "str",
+            "item_type": "str",
+            "label": "",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "yiluxiangbei/kaldi_distributed_worker:v1",
+            "placeholder": "",
+            "describe": "worker镜像，直接运行你代码的环境镜像 <a target='_blank' href='https://github.com/tensorbyte/rosefinch'>基础镜像</a>",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        }
+    }
+}

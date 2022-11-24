@@ -103,4 +103,27 @@ job_template
     "help_url": "https://github.com/tensorbyte/rosefinch",
     "source": "github"
 }
+
+{
+    "index": 6,
+    "help_url": "https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/kaldi_distributed_on_volcanojob",
+    "source": "github"
+}
+{
+    "index": 6,
+    "help_url": "https://github.com/tensorbyte/rosefinch",
+    "source": "github"
+}
+
+# tf-distribute-model-evaluation
+{
+    "index": 6,
+    "help_url": "https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/tf_distributed_evaluation",
+    "source": "github"
+}
+{
+    "index": 6,
+    "help_url": "https://github.com/tensorbyte/rosefinch",
+    "source": "github"
+}
 ```
