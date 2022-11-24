@@ -139,4 +139,8 @@ sudo docker push yiluxiangbei/notebook:jupyter-ubuntu-machinelearning
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-deeplearning
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/notebook:jupyter-ubuntu-deeplearning yiluxiangbei/notebook:jupyter-ubuntu-deeplearning
 sudo docker push yiluxiangbei/notebook:jupyter-ubuntu-deeplearning
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda10.1-cudnn7-python3.6
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/ubuntu-gpu:cuda10.1-cudnn7-python3.6 yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6
+sudo docker push yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6
 ```
