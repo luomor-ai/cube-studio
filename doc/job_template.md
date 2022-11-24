@@ -92,4 +92,15 @@ job_template
     "help_url": "https://github.com/tensorbyte/rosefinch",
     "source": "github"
 }
+
+{
+    "index": 5,
+    "help_url": "https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/tf_model_evaluation",
+    "source": "github"
+}
+{
+    "index": 5,
+    "help_url": "https://github.com/tensorbyte/rosefinch",
+    "source": "github"
+}
 ```
