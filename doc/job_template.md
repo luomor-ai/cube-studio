@@ -24,6 +24,7 @@ job_template
     "source": "github"
 }
 
+# tfjob-runner
 {
     "index": 2,
     "help_url": "https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/tf_keras_train",
@@ -46,6 +47,7 @@ job_template
     "source": "github"
 }
 
+# tfjob-plain
 {
     "index": 3,
     "help_url": "https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/tf_plain_train",
@@ -68,6 +70,7 @@ job_template
     "source": "github"
 }
 
+# tfjob-train
 {
     "index": 4,
     "help_url": "https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/tf_distributed_train",
