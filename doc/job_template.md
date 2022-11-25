@@ -228,4 +228,10 @@ job_template
     "help_url": "https://github.com/tensorbyte/rosefinch",
     "source": "github"
 }
+
+# ubuntu
+{
+    "index": 1,
+    "source": "github"
+}
 ```
