@@ -1,0 +1,32 @@
+{
+    "参数": {
+        "--num_workers": {
+            "type": "str",
+            "item_type": "str",
+            "label": "worker数量",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "3",
+            "placeholder": "",
+            "describe": "worker数量",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--input_file": {
+            "type": "str",
+            "item_type": "str",
+            "label": "",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "",
+            "placeholder": "",
+            "describe": "配置文件地址，每行格式：<br>$local_video_path $des_audio_path",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        }
+    }
+}
