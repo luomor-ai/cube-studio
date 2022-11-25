@@ -1,0 +1,60 @@
+{
+    "参数": {
+        "--image": {
+            "type": "str",
+            "item_type": "str",
+            "label": "",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6",
+            "placeholder": "",
+            "describe": "worker镜像，直接运行你代码的环境镜像<a target='_blank' href='https://github.com/tensorbyte/rosefinch'>基础镜像</a>",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--working_dir": {
+            "type": "str",
+            "item_type": "str",
+            "label": "启动目录",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "/mnt/xx",
+            "placeholder": "",
+            "describe": "启动目录",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--command": {
+            "type": "str",
+            "item_type": "str",
+            "label": "启动命令",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "echo aa",
+            "placeholder": "",
+            "describe": "启动命令",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--num_worker": {
+            "type": "str",
+            "item_type": "str",
+            "label": "占用机器个数",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "3",
+            "placeholder": "",
+            "describe": "占用机器个数",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        }
+    }
+}
