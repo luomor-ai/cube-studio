@@ -147,4 +147,8 @@ sudo docker push yiluxiangbei/ubuntu-gpu:cuda10.1-cudnn7-python3.6
 sudo docker pull ccr.ccs.tencentyun.com/cube-studio/kaldi_distributed_worker:v1
 sudo docker tag ccr.ccs.tencentyun.com/cube-studio/kaldi_distributed_worker:v1 yiluxiangbei/kaldi_distributed_worker:v1
 sudo docker push yiluxiangbei/kaldi_distributed_worker:v1
+
+sudo docker pull ccr.ccs.tencentyun.com/cube-studio/spark-operator:spark-v3.1.1
+sudo docker tag ccr.ccs.tencentyun.com/cube-studio/spark-operator:spark-v3.1.1 yiluxiangbei/spark-operator:spark-v3.1.1
+sudo docker push yiluxiangbei/spark-operator:spark-v3.1.1
 ```
