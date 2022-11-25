@@ -126,4 +126,15 @@ job_template
     "help_url": "https://github.com/tensorbyte/rosefinch",
     "source": "github"
 }
+
+{
+    "index": 7,
+    "help_url": "https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/tf_model_offline_predict",
+    "source": "github"
+}
+{
+    "index": 7,
+    "help_url": "https://github.com/tensorbyte/rosefinch",
+    "source": "github"
+}
 ```

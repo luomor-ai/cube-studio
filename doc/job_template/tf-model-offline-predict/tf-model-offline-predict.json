@@ -1,0 +1,32 @@
+{
+    "参数": {
+        "--job": {
+            "type": "json",
+            "item_type": "str",
+            "label": "json配置",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "",
+            "placeholder": "",
+            "describe": "json配置",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--upstream-output-file": {
+            "type": "str",
+            "item_type": "str",
+            "label": "上游输出文件",
+            "require": 0,
+            "choice": [],
+            "range": "",
+            "default": "",
+            "placeholder": "",
+            "describe": "上游输出文件",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        }
+    }
+}
