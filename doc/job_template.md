@@ -234,4 +234,15 @@ job_template
     "index": 1,
     "source": "github"
 }
+
+{
+    "index": 1,
+    "help_url": "https://github.com/tencentmusic/cube-studio/tree/master/job-template/job/datax",
+    "source": "github"
+}
+{
+    "index": 1,
+    "help_url": "https://github.com/tensorbyte/rosefinch",
+    "source": "github"
+}
 ```
