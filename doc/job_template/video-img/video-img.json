@@ -1,0 +1,32 @@
+{
+    "参数": {
+        "--num_workers": {
+            "type": "str",
+            "item_type": "str",
+            "label": "",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "3",
+            "placeholder": "",
+            "describe": "worker数量",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--input_file": {
+            "type": "str",
+            "item_type": "str",
+            "label": "",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "",
+            "placeholder": "配置文件地址，每行格式：<br>$local_video_path $des_img_dir $frame_rate",
+            "describe": "配置文件地址，每行格式：<br>$local_video_path $des_img_dir $frame_rate",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        }
+    }
+}
