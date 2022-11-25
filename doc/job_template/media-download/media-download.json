@@ -1,0 +1,48 @@
+{
+    "参数": {
+        "--num_worker": {
+            "type": "str",
+            "item_type": "str",
+            "label": "分布式任务的worker数目",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "3",
+            "placeholder": "分布式任务的worker数目",
+            "describe": "分布式任务的worker数目",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--download_type": {
+            "type": "enum",
+            "item_type": "str",
+            "label": "下载类型",
+            "require": 1,
+            "choice": [
+                "url"
+            ],
+            "range": "",
+            "default": "url",
+            "placeholder": "",
+            "describe": "下载类型",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        },
+        "--input_file": {
+            "type": "str",
+            "item_type": "str",
+            "label": "下载信息文件地址",
+            "require": 1,
+            "choice": [],
+            "range": "",
+            "default": "",
+            "placeholder": "",
+            "describe": "下载信息文件地址<br>url类型，每行格式：$url $local_path",
+            "editable": 1,
+            "condition": "",
+            "sub_args": {}
+        }
+    }
+}
